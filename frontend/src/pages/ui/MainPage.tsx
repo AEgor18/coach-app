@@ -1,37 +1,190 @@
 import { Box, Typography, Card, Button } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { getAllTrainings } from '../../api/trainings';
+import type { TrainingsPlan } from '../../types/types';
 
 export const MainPage = () => {
-	const daysOfWeek = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
-	const calendarDays = [
-		{ day: 25, otherMonth: true },
-		{ day: 26, otherMonth: true },
-		{ day: 27, otherMonth: true },
-		{ day: 28, otherMonth: true },
-		{ day: 29, otherMonth: true },
-		{ day: 30, otherMonth: true },
+	const navigate = useNavigate();
+	const [trainings, setTrainings] = useState<TrainingsPlan[]>([]);
+	const [currentDate, setCurrentDate] = useState(new Date());
+	const [loading, setLoading] = useState(false);
 
-		{ day: 1 },
-		{ day: 2 },
-		{ day: 3 },
-		{ day: 4 },
-		{
-			day: 5,
-			events: [{ time: '10:00', title: 'Силовая тренировка' }],
-		},
-		{ day: 6 },
-		{ day: 7 },
-		{ day: 8 },
-		{ day: 9 },
-		{ day: 10 },
-		{
-			day: 11,
-			current: true,
-			events: [
-				{ time: '08:30', title: 'Утренняя группа' },
-				{ time: '17:00', title: 'Индивидуальная' },
-			],
-		},
-	];
+	useEffect(() => {
+		if (!localStorage.getItem('access_token')) {
+			navigate('/auth');
+		} else {
+			fetchTrainings();
+		}
+	}, []);
+
+	const fetchTrainings = async () => {
+		try {
+			setLoading(true);
+			const token = localStorage.getItem('access_token')!;
+			const data = await getAllTrainings(token);
+			setTrainings(data || []);
+		} catch (error) {
+			console.error('Ошибка при загрузке тренировок:', error);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const getMoscowDate = (date: Date): Date => {
+		const utcDate = new Date(
+			Date.UTC(
+				date.getFullYear(),
+				date.getMonth(),
+				date.getDate(),
+				date.getHours(),
+				date.getMinutes(),
+				date.getSeconds()
+			)
+		);
+
+		const moscowDate = new Date(utcDate.getTime() + 3 * 60 * 60 * 1000);
+		return moscowDate;
+	};
+
+	const formatToMoscowDateString = (date: Date): string => {
+		const moscowDate = getMoscowDate(date);
+		return moscowDate.toISOString().split('T')[0];
+	};
+
+	const createMoscowDate = (
+		year: number,
+		month: number,
+		day: number
+	): Date => {
+		const date = new Date(Date.UTC(year, month, day, 0, 0, 0));
+		return new Date(date.getTime() + 3 * 60 * 60 * 1000);
+	};
+
+	const getCalendarData = () => {
+		const year = currentDate.getFullYear();
+		const month = currentDate.getMonth();
+
+		const firstDay = createMoscowDate(year, month, 1);
+		const lastDay = createMoscowDate(year, month + 1, 0);
+
+		const firstDayOfWeek = firstDay.getDay();
+		const adjustedFirstDayOfWeek =
+			firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
+
+		const daysInMonth = lastDay.getDate();
+		const days = [];
+
+		const prevMonthLastDay = createMoscowDate(year, month, 0).getDate();
+		for (
+			let i = prevMonthLastDay - adjustedFirstDayOfWeek + 1;
+			i <= prevMonthLastDay;
+			i++
+		) {
+			const date = createMoscowDate(year, month - 1, i);
+			days.push({
+				day: i,
+				date: formatToMoscowDateString(date),
+				otherMonth: true,
+				events: getTrainingsForDate(date),
+			});
+		}
+
+		const today = getMoscowDate(new Date());
+		const todayString = formatToMoscowDateString(today);
+
+		for (let i = 1; i <= daysInMonth; i++) {
+			const date = createMoscowDate(year, month, i);
+			const dateString = formatToMoscowDateString(date);
+			days.push({
+				day: i,
+				date: dateString,
+				current: dateString === todayString,
+				events: getTrainingsForDate(date),
+			});
+		}
+
+		const totalCells = 42;
+		const nextMonthDays = totalCells - days.length;
+		for (let i = 1; i <= nextMonthDays; i++) {
+			const date = createMoscowDate(year, month + 1, i);
+			days.push({
+				day: i,
+				date: formatToMoscowDateString(date),
+				otherMonth: true,
+				events: getTrainingsForDate(date),
+			});
+		}
+
+		return days;
+	};
+
+	const getTrainingsForDate = (date: Date) => {
+		const dateString = formatToMoscowDateString(date);
+
+		return trainings
+			.filter((training) => {
+				const trainingDate = new Date(training.date + 'T00:00:00Z');
+				const trainingDateMoscow = getMoscowDate(trainingDate);
+				const trainingDateString =
+					formatToMoscowDateString(trainingDateMoscow);
+
+				return trainingDateString === dateString;
+			})
+			.map((training) => ({
+				time: formatTrainingTime(training.duration),
+				title: training.title,
+				type: training.training_type,
+				id: training.id,
+			}));
+	};
+
+	const formatTrainingTime = (duration: number) => {
+		const hours = Math.floor(duration / 60);
+		const minutes = duration % 60;
+
+		if (hours > 0) {
+			return `${hours}:${minutes.toString().padStart(2, '0')}`;
+		}
+		return `${minutes} мин`;
+	};
+
+	const navigateMonth = (direction: 'prev' | 'next') => {
+		setCurrentDate((prev) => {
+			const newDate = new Date(prev);
+			if (direction === 'prev') {
+				newDate.setMonth(prev.getMonth() - 1);
+			} else {
+				newDate.setMonth(prev.getMonth() + 1);
+			}
+			return newDate;
+		});
+	};
+
+	const getMonthName = (date: Date) => {
+		const months = [
+			'Январь',
+			'Февраль',
+			'Март',
+			'Апрель',
+			'Май',
+			'Июнь',
+			'Июль',
+			'Август',
+			'Сентябрь',
+			'Октябрь',
+			'Ноябрь',
+			'Декабрь',
+		];
+		return months[date.getMonth()];
+	};
+
+	const getYear = (date: Date) => {
+		return date.getFullYear();
+	};
+
+	const daysOfWeek = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+	const calendarDays = getCalendarData();
 
 	return (
 		<Box>
@@ -73,7 +226,7 @@ export const MainPage = () => {
 							color: '#2D3748',
 						}}
 					>
-						Декабрь 2025
+						{getMonthName(currentDate)} {getYear(currentDate)}
 					</Typography>
 
 					<Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -85,6 +238,7 @@ export const MainPage = () => {
 							}}
 						>
 							<Button
+								onClick={() => navigateMonth('prev')}
 								sx={{
 									minWidth: 'auto',
 									color: '#4A5568',
@@ -100,9 +254,10 @@ export const MainPage = () => {
 							<Typography
 								sx={{ fontSize: '14px', color: '#2D3748' }}
 							>
-								Сегодня
+								{getMonthName(currentDate)}
 							</Typography>
 							<Button
+								onClick={() => navigateMonth('next')}
 								sx={{
 									minWidth: 'auto',
 									color: '#4A5568',
@@ -116,24 +271,6 @@ export const MainPage = () => {
 								›
 							</Button>
 						</Box>
-
-						<Button
-							variant='contained'
-							sx={{
-								backgroundColor: '#377CD6',
-								fontWeight: 600,
-								fontSize: '14px',
-								'&:hover': {
-									backgroundColor: '#2B6CB0',
-									transform: 'translateY(-1px)',
-									boxShadow:
-										'0 6px 12px rgba(55, 124, 214, 0.3)',
-								},
-								transition: 'all 0.3s ease',
-							}}
-						>
-							Создать тренировку
-						</Button>
 					</Box>
 				</Box>
 
@@ -202,8 +339,12 @@ export const MainPage = () => {
 								<Box
 									key={eventIndex}
 									sx={{
-										backgroundColor: '#EBF8FF',
-										borderLeft: '3px solid #377CD6',
+										backgroundColor: getEventColor(
+											event.type
+										),
+										borderLeft: `3px solid ${getEventBorderColor(
+											event.type
+										)}`,
 										padding: '6px 8px',
 										mb: 0.5,
 										borderRadius: '4px',
@@ -211,21 +352,54 @@ export const MainPage = () => {
 										cursor: 'pointer',
 										transition: 'all 0.2s',
 										'&:hover': {
-											backgroundColor: '#BEE3F8',
+											backgroundColor: getEventHoverColor(
+												event.type
+											),
 											transform: 'scale(1.02)',
 										},
 									}}
+									onClick={() =>
+										console.log(
+											'Training clicked:',
+											event.id
+										)
+									}
 								>
 									<Box
 										sx={{
 											fontWeight: 600,
-											color: '#377CD6',
+											color: getEventTextColor(
+												event.type
+											),
 											fontSize: '11px',
+											mb: 0.5,
 										}}
 									>
 										{event.time}
 									</Box>
-									{event.title}
+									<Box
+										sx={{
+											color: getEventTextColor(
+												event.type
+											),
+											fontSize: '11px',
+											lineHeight: 1.2,
+										}}
+									>
+										{event.title}
+									</Box>
+									<Box
+										sx={{
+											color: getEventTypeColor(
+												event.type
+											),
+											fontSize: '10px',
+											fontWeight: 600,
+											mt: 0.5,
+										}}
+									>
+										{event.type}
+									</Box>
 								</Box>
 							))}
 						</Box>
@@ -234,4 +408,79 @@ export const MainPage = () => {
 			</Card>
 		</Box>
 	);
+};
+
+const getEventColor = (type: string) => {
+	switch (type) {
+		case 'Индивидуальные':
+			return '#EBF8FF';
+		case 'Групповые':
+			return '#F0FFF4';
+		case 'Силовые':
+			return '#FFF5F5';
+		case 'Кардио':
+			return '#FAF5FF';
+		default:
+			return '#EDF2F7';
+	}
+};
+
+const getEventBorderColor = (type: string) => {
+	switch (type) {
+		case 'Индивидуальные':
+			return '#3182CE';
+		case 'Групповые':
+			return '#38A169';
+		case 'Силовые':
+			return '#E53E3E';
+		case 'Кардио':
+			return '#805AD5';
+		default:
+			return '#4A5568';
+	}
+};
+
+const getEventHoverColor = (type: string) => {
+	switch (type) {
+		case 'Индивидуальные':
+			return '#BEE3F8';
+		case 'Групповые':
+			return '#C6F6D5';
+		case 'Силовые':
+			return '#FED7D7';
+		case 'Кардио':
+			return '#E9D8FD';
+		default:
+			return '#E2E8F0';
+	}
+};
+
+const getEventTextColor = (type: string) => {
+	switch (type) {
+		case 'Индивидуальные':
+			return '#2C5282';
+		case 'Групповые':
+			return '#276749';
+		case 'Силовые':
+			return '#C53030';
+		case 'Кардио':
+			return '#553C9A';
+		default:
+			return '#2D3748';
+	}
+};
+
+const getEventTypeColor = (type: string) => {
+	switch (type) {
+		case 'Индивидуальные':
+			return '#3182CE';
+		case 'Групповые':
+			return '#38A169';
+		case 'Силовые':
+			return '#E53E3E';
+		case 'Кардио':
+			return '#805AD5';
+		default:
+			return '#4A5568';
+	}
 };

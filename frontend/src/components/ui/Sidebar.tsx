@@ -10,9 +10,39 @@ import {
 } from '@mui/material';
 import { sidebarPages } from '../../constants';
 import { Link, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { getUser } from '../../api/profile';
 
 export function Sidebar() {
 	const location = useLocation();
+
+	const [user, setUser] = useState({});
+	const [showName, setShowName] = useState();
+	useEffect(() => {
+		fetchUser();
+	}, []);
+
+	const fetchUser = async () => {
+		const token = localStorage.getItem('access_token')!;
+		const res = await getUser(token);
+
+		if (res) {
+			setUser(res);
+			formatFullName(res.full_name);
+		}
+	};
+
+	const formatFullName = (fullName) => {
+		const showName = fullName.split(' ');
+		if (showName.length === 1) {
+			setShowName(showName[0].slice(0, 1).toUpperCase());
+		} else {
+			const name =
+				showName[0].slice(0, 1).toUpperCase() +
+				showName[1].slice(0, 1).toUpperCase();
+			setShowName(name);
+		}
+	};
 
 	return (
 		<Box
@@ -38,7 +68,7 @@ export function Sidebar() {
 						boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
 					}}
 				>
-					ИП
+					{showName}
 				</Avatar>
 				<Typography
 					sx={{
@@ -48,7 +78,7 @@ export function Sidebar() {
 						marginBottom: '5px',
 					}}
 				>
-					Иван Петров
+					{user.full_name}
 				</Typography>
 				<Typography
 					sx={{

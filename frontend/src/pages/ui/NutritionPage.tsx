@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
 	Box,
 	Grid,
@@ -11,97 +11,171 @@ import {
 	FormControl,
 	InputLabel,
 	Chip,
-	Dialog,
-	DialogTitle,
-	DialogContent,
-	DialogActions,
-	IconButton,
-	Divider,
+	Snackbar,
+	Alert,
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
-
-type NutritionPlan = {
-	id: number;
-	title: string;
-	type: 'Набор массы' | 'Снижение веса' | 'Поддержание' | 'Восстановление';
-	status: 'Активен' | 'Завершен';
-	calories: number;
-	macros: string;
-	period: string;
-	description: string;
-	athletes: string[];
-	meals: { time: string; content: string }[];
-};
-
-const mockPlans: NutritionPlan[] = [
-	{
-		id: 1,
-		title: 'Массонаборный рацион',
-		type: 'Набор массы',
-		status: 'Активен',
-		calories: 3200,
-		macros: '180/80/380',
-		period: '8 недель',
-		description:
-			'Высококалорийная диета с упором на белок для роста мышечной массы. 6 приемов пищи в день.',
-		athletes: ['Алексей Иванов', 'Дмитрий Козлов'],
-		meals: [
-			{
-				time: 'Завтрак',
-				content: 'Овсянка 100г, яйца 3шт, тост с авокадо',
-			},
-			{
-				time: 'Обед',
-				content: 'Гречка 150г, куриная грудка 200г, овощи',
-			},
-			{ time: 'Ужин', content: 'Рис 120г, лосось 180г, салат' },
-		],
-	},
-];
+import { useNavigate } from 'react-router-dom';
+import {
+	deleteNutritionById,
+	getAllNutritions,
+	createNutrition,
+	updateNutritionById,
+} from '../../api/nutrition';
+import { Loading } from '../../components/ui/Loading';
+import type { NutritionPlan, NutritionFormData } from '../../types/types';
+import {
+	AddNutritionModal,
+	EditNutritionModal,
+} from '../../components/modals/nutrition';
 
 export const NutritionPage: React.FC = () => {
-	const [plans, setPlans] = useState<NutritionPlan[]>(mockPlans);
+	const [plans, setPlans] = useState<NutritionPlan[]>([]);
 	const [search, setSearch] = useState('');
 	const [statusFilter, setStatusFilter] = useState<
-		'Все' | 'Активен' | 'Завершен'
-	>('Все');
-	const [typeFilter, setTypeFilter] = useState<'Все' | NutritionPlan['type']>(
-		'Все'
-	);
+		'Все статусы' | 'Активен' | 'Завершен'
+	>('Все статусы');
+	const [typeFilter, setTypeFilter] = useState('Все типы');
 
-	const [editOpen, setEditOpen] = useState(false);
+	const [addModalOpen, setAddModalOpen] = useState(false);
+	const [editModalOpen, setEditModalOpen] = useState(false);
 	const [selectedPlan, setSelectedPlan] = useState<NutritionPlan | null>(
 		null
 	);
+	const [loading, setLoading] = useState(false);
+	const [snackbar, setSnackbar] = useState({
+		open: false,
+		message: '',
+		severity: 'success' as 'success' | 'error',
+	});
+
+	const navigate = useNavigate();
+
+	useEffect(() => {
+		if (!localStorage.getItem('access_token')) {
+			navigate('/auth');
+		}
+
+		fetchPlans();
+	}, []);
+
+	const fetchPlans = async () => {
+		try {
+			setLoading(true);
+			const res = await getAllNutritions(
+				localStorage.getItem('access_token')!
+			);
+
+			if (res) {
+				setPlans(res);
+			}
+		} catch (error) {
+			console.log(error);
+			showSnackbar('Ошибка при загрузке планов питания', 'error');
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleAddNutrition = async (nutritionData: NutritionFormData) => {
+		try {
+			setLoading(true);
+			await createNutrition(
+				localStorage.getItem('access_token')!,
+				nutritionData
+			);
+			setAddModalOpen(false);
+			showSnackbar('План питания успешно создан', 'success');
+			await fetchPlans();
+		} catch (error) {
+			console.log(error);
+			showSnackbar('Ошибка при создании плана питания', 'error');
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleEditNutrition = async (nutritionData: NutritionFormData) => {
+		if (!selectedPlan) return;
+
+		try {
+			setLoading(true);
+			await updateNutritionById(
+				localStorage.getItem('access_token')!,
+				selectedPlan.id,
+				nutritionData
+			);
+			setEditModalOpen(false);
+			setSelectedPlan(null);
+			showSnackbar('План питания успешно обновлен', 'success');
+			await fetchPlans();
+		} catch (error) {
+			console.log(error);
+			showSnackbar('Ошибка при обновлении плана питания', 'error');
+		} finally {
+			setLoading(false);
+		}
+	};
 
 	const handleOpenEdit = (plan: NutritionPlan) => {
 		setSelectedPlan(plan);
-		setEditOpen(true);
+		setEditModalOpen(true);
 	};
 
 	const handleCloseEdit = () => {
-		setEditOpen(false);
+		setEditModalOpen(false);
 		setSelectedPlan(null);
 	};
 
-	const handleDelete = (id: number) => {
-		setPlans((prev) => prev.filter((p) => p.id !== id));
+	const handleDelete = async (id: number) => {
+		try {
+			setLoading(true);
+			await deleteNutritionById(
+				localStorage.getItem('access_token')!,
+				id
+			);
+			showSnackbar('План питания успешно удален', 'success');
+			await fetchPlans();
+		} catch (error) {
+			console.log(error);
+			showSnackbar('Ошибка при удалении плана питания', 'error');
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const showSnackbar = (message: string, severity: 'success' | 'error') => {
+		setSnackbar({
+			open: true,
+			message,
+			severity,
+		});
+	};
+
+	const handleCloseSnackbar = () => {
+		setSnackbar((prev) => ({ ...prev, open: false }));
 	};
 
 	const visiblePlans = plans.filter((plan) => {
 		const q = search.trim().toLowerCase();
 		if (
 			q &&
-			!`${plan.title} ${plan.description} ${plan.athletes.join(' ')}`
+			!`${plan.title} ${plan.description} ${plan.athletes
+				.map((a) => a.name)
+				.join(' ')}`
 				.toLowerCase()
 				.includes(q)
 		)
 			return false;
-		if (statusFilter !== 'Все' && plan.status !== statusFilter)
+		if (statusFilter !== 'Все статусы' && plan.status !== statusFilter)
 			return false;
-		if (typeFilter !== 'Все' && plan.type !== typeFilter) return false;
+		if (typeFilter !== 'Все типы' && plan.nutrition_type !== typeFilter)
+			return false;
 		return true;
 	});
+
+	if (loading && plans.length === 0) {
+		return <Loading />;
+	}
 
 	return (
 		<Box
@@ -131,15 +205,8 @@ export const NutritionPage: React.FC = () => {
 						value: plans.filter((p) => p.status === 'Завершен')
 							.length,
 					},
-					{
-						label: 'Средняя калорийность',
-						value: `${Math.round(
-							plans.reduce((a, b) => a + b.calories, 0) /
-								plans.length
-						)} ккал`,
-					},
-				].map((stat, i) => (
-					<Grid item xs={12} sm={6} md={3} key={i}>
+				].map((stat, idx) => (
+					<Grid item xs={12} sm={4} key={idx}>
 						<Card
 							sx={{
 								textAlign: 'center',
@@ -168,88 +235,66 @@ export const NutritionPage: React.FC = () => {
 				))}
 			</Grid>
 
-			<Grid
-				container
-				spacing={2}
-				alignItems='center'
-				justifyContent='space-between'
-				mb={3}
-			>
-				<Grid item xs={12} md={4}>
-					<TextField
-						fullWidth
-						size='small'
-						placeholder='Поиск плана...'
-						value={search}
-						onChange={(e) => setSearch(e.target.value)}
-						sx={{ backgroundColor: '#FFFFFF', borderRadius: 1 }}
-					/>
-				</Grid>
-
-				<Grid item xs={12} md='auto'>
-					<Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-						<FormControl size='small' sx={{ minWidth: 130 }}>
-							<InputLabel>Статус</InputLabel>
-							<Select
-								value={statusFilter}
-								label='Статус'
-								onChange={(e) =>
-									setStatusFilter(e.target.value as any)
-								}
-							>
-								<MenuItem value='Все'>Все</MenuItem>
-								<MenuItem value='Активен'>Активные</MenuItem>
-								<MenuItem value='Завершен'>
-									Завершенные
-								</MenuItem>
-							</Select>
-						</FormControl>
-
-						<FormControl size='small' sx={{ minWidth: 130 }}>
-							<InputLabel>Тип</InputLabel>
-							<Select
-								value={typeFilter}
-								label='Тип'
-								onChange={(e) =>
-									setTypeFilter(e.target.value as any)
-								}
-							>
-								<MenuItem value='Все'>Все типы</MenuItem>
-								<MenuItem value='Набор массы'>
-									Набор массы
-								</MenuItem>
-								<MenuItem value='Снижение веса'>
-									Снижение веса
-								</MenuItem>
-								<MenuItem value='Поддержание'>
-									Поддержание
-								</MenuItem>
-								<MenuItem value='Восстановление'>
-									Восстановление
-								</MenuItem>
-							</Select>
-						</FormControl>
-
-						<Button
-							variant='contained'
-							sx={{
-								backgroundColor: '#377CD6',
-								fontWeight: 600,
-								fontSize: '14px',
-								'&:hover': {
-									backgroundColor: '#2B6CB0',
-									transform: 'translateY(-1px)',
-									boxShadow:
-										'0 6px 12px rgba(55, 124, 214, 0.3)',
-								},
-								transition: 'all 0.3s ease',
-							}}
-						>
-							Создать план
-						</Button>
-					</Box>
-				</Grid>
-			</Grid>
+			<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 4 }}>
+				<TextField
+					placeholder='Поиск плана питания...'
+					size='small'
+					value={search}
+					onChange={(e) => setSearch(e.target.value)}
+					sx={{
+						minWidth: 200,
+						backgroundColor: '#E2E8F0',
+						borderRadius: 1,
+						flex: 1,
+						background: '#fff',
+					}}
+				/>
+				<FormControl size='small' sx={{ minWidth: 150 }}>
+					<InputLabel>Статус</InputLabel>
+					<Select
+						value={statusFilter}
+						onChange={(e) => setStatusFilter(e.target.value)}
+						label='Статус'
+					>
+						<MenuItem value='Все статусы'>Все статусы</MenuItem>
+						<MenuItem value='Активен'>Активные</MenuItem>
+						<MenuItem value='Завершен'>Завершенные</MenuItem>
+					</Select>
+				</FormControl>
+				<FormControl size='small' sx={{ minWidth: 150 }}>
+					<InputLabel>Тип</InputLabel>
+					<Select
+						value={typeFilter}
+						onChange={(e) => setTypeFilter(e.target.value)}
+						label='Тип'
+					>
+						<MenuItem value='Все типы'>Все типы</MenuItem>
+						<MenuItem value='набор массы'>Набор массы</MenuItem>
+						<MenuItem value='снижение веса'>Снижение веса</MenuItem>
+						<MenuItem value='поддержание'>Поддержание</MenuItem>
+						<MenuItem value='восстановление'>
+							Восстановление
+						</MenuItem>
+					</Select>
+				</FormControl>
+				<Button
+					variant='contained'
+					onClick={() => setAddModalOpen(true)}
+					sx={{
+						backgroundColor: '#377CD6',
+						fontWeight: 600,
+						fontSize: '14px',
+						'&:hover': {
+							backgroundColor: '#2B6CB0',
+							transform: 'translateY(-1px)',
+							boxShadow: '0 6px 12px rgba(55, 124, 214, 0.3)',
+						},
+						transition: 'all 0.3s ease',
+					}}
+				>
+					Создать план
+				</Button>
+			</Box>
 
 			<Grid container spacing={2}>
 				{visiblePlans.map((plan) => (
@@ -259,16 +304,18 @@ export const NutritionPage: React.FC = () => {
 								borderRadius: 2,
 								p: 2,
 								borderLeft: `4px solid ${
-									plan.type === 'Набор массы'
+									plan.nutrition_type === 'набор массы'
 										? '#F56565'
-										: plan.type === 'Снижение веса'
+										: plan.nutrition_type ===
+										  'снижение веса'
 										? '#48BB78'
-										: plan.type === 'Поддержание'
+										: plan.nutrition_type === 'поддержание'
 										? '#ED8936'
 										: '#377CD6'
 								}`,
 								boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
 								transition: 'all 0.2s ease',
+								minWidth: 400,
 							}}
 						>
 							<Typography
@@ -288,7 +335,7 @@ export const NutritionPage: React.FC = () => {
 									mb: 1,
 								}}
 							>
-								{plan.type}
+								{plan.nutrition_type}
 							</Typography>
 
 							<Chip
@@ -336,7 +383,8 @@ export const NutritionPage: React.FC = () => {
 										component='span'
 										sx={{ color: '#2D3748' }}
 									>
-										{plan.macros}
+										{plan.protein}/{plan.fats}/{plan.carbs}{' '}
+										г
 									</Box>
 								</Typography>
 								<Typography
@@ -350,7 +398,7 @@ export const NutritionPage: React.FC = () => {
 										component='span'
 										sx={{ color: '#2D3748' }}
 									>
-										{plan.period}
+										{plan.period_weeks} недель
 									</Box>
 								</Typography>
 							</Box>
@@ -378,21 +426,39 @@ export const NutritionPage: React.FC = () => {
 								>
 									Пример рациона:
 								</Typography>
-								{plan.meals.map((meal, i) => (
-									<Typography
-										key={i}
-										sx={{
-											fontSize: 12,
-											backgroundColor: '#F7FAFC',
-											borderRadius: 1,
-											p: 0.7,
-											mb: 0.5,
-										}}
-									>
-										<strong>{meal.time}:</strong>{' '}
-										{meal.content}
-									</Typography>
-								))}
+								<Typography
+									sx={{
+										fontSize: 12,
+										backgroundColor: '#F7FAFC',
+										borderRadius: 1,
+										p: 0.7,
+										mb: 0.5,
+									}}
+								>
+									<strong>Завтрак:</strong> {plan.breakfast}
+								</Typography>
+								<Typography
+									sx={{
+										fontSize: 12,
+										backgroundColor: '#F7FAFC',
+										borderRadius: 1,
+										p: 0.7,
+										mb: 0.5,
+									}}
+								>
+									<strong>Обед:</strong> {plan.lunch}
+								</Typography>
+								<Typography
+									sx={{
+										fontSize: 12,
+										backgroundColor: '#F7FAFC',
+										borderRadius: 1,
+										p: 0.7,
+										mb: 0.5,
+									}}
+								>
+									<strong>Ужин:</strong> {plan.dinner}
+								</Typography>
 							</Box>
 
 							<Box sx={{ mb: 1.5 }}>
@@ -414,9 +480,9 @@ export const NutritionPage: React.FC = () => {
 								>
 									{plan.athletes.map((a) => (
 										<Chip
-											key={a}
-											label={a}
+											key={a.id}
 											size='small'
+											label={a.name}
 											sx={{
 												fontSize: 11,
 												backgroundColor: '#E2E8F0',
@@ -426,8 +492,6 @@ export const NutritionPage: React.FC = () => {
 									))}
 								</Box>
 							</Box>
-
-							<Divider sx={{ my: 1 }} />
 
 							<Box sx={{ display: 'flex', gap: 1 }}>
 								<Button
@@ -470,113 +534,37 @@ export const NutritionPage: React.FC = () => {
 				))}
 			</Grid>
 
-			<Dialog
-				open={editOpen}
+			{/* Модальное окно добавления */}
+			<AddNutritionModal
+				open={addModalOpen}
+				onClose={() => setAddModalOpen(false)}
+				onSave={handleAddNutrition}
+				loading={loading}
+			/>
+
+			{/* Модальное окно редактирования */}
+			<EditNutritionModal
+				open={editModalOpen}
 				onClose={handleCloseEdit}
-				maxWidth='md'
-				fullWidth
+				onSave={handleEditNutrition}
+				nutrition={selectedPlan}
+				loading={loading}
+			/>
+
+			<Snackbar
+				open={snackbar.open}
+				autoHideDuration={6000}
+				onClose={handleCloseSnackbar}
+				anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
 			>
-				<DialogTitle
-					sx={{
-						display: 'flex',
-						justifyContent: 'space-between',
-						fontWeight: 700,
-						color: '#2D3748',
-					}}
+				<Alert
+					onClose={handleCloseSnackbar}
+					severity={snackbar.severity}
+					variant='filled'
 				>
-					Редактирование плана
-					<IconButton onClick={handleCloseEdit}>
-						<CloseIcon />
-					</IconButton>
-				</DialogTitle>
-				<DialogContent dividers>
-					<Box sx={{ mt: 1 }}>
-						<TextField
-							fullWidth
-							label='Название плана'
-							defaultValue={selectedPlan?.title}
-							sx={{ mb: 2 }}
-							size='small'
-						/>
-						<Grid container spacing={2}>
-							<Grid item xs={12} sm={6}>
-								<FormControl fullWidth size='small'>
-									<InputLabel>Тип</InputLabel>
-									<Select
-										value={selectedPlan?.type || ''}
-										label='Тип'
-									>
-										<MenuItem value='Набор массы'>
-											Набор массы
-										</MenuItem>
-										<MenuItem value='Снижение веса'>
-											Снижение веса
-										</MenuItem>
-										<MenuItem value='Поддержание'>
-											Поддержание
-										</MenuItem>
-										<MenuItem value='Восстановление'>
-											Восстановление
-										</MenuItem>
-									</Select>
-								</FormControl>
-							</Grid>
-							<Grid item xs={12} sm={6}>
-								<FormControl fullWidth size='small'>
-									<InputLabel>Статус</InputLabel>
-									<Select
-										value={selectedPlan?.status || ''}
-										label='Статус'
-									>
-										<MenuItem value='Активен'>
-											Активен
-										</MenuItem>
-										<MenuItem value='Завершен'>
-											Завершен
-										</MenuItem>
-									</Select>
-								</FormControl>
-							</Grid>
-						</Grid>
-						<TextField
-							fullWidth
-							multiline
-							rows={3}
-							label='Описание'
-							defaultValue={selectedPlan?.description}
-							sx={{ mt: 2 }}
-							size='small'
-						/>
-					</Box>
-				</DialogContent>
-				<DialogActions>
-					<Button
-						onClick={handleCloseEdit}
-						sx={{
-							backgroundColor: '#E2E8F0',
-							color: '#2D3748',
-							'&:hover': {
-								backgroundColor: '#CBD5E0',
-							},
-							px: 3,
-							fontWeight: 600,
-						}}
-					>
-						Отмена
-					</Button>
-					<Button
-						variant='contained'
-						sx={{
-							backgroundColor: '#377CD6',
-							'&:hover': { backgroundColor: '#2B6CB0' },
-							px: 3,
-							fontWeight: 600,
-						}}
-					>
-						Сохранить
-					</Button>
-				</DialogActions>
-			</Dialog>
+					{snackbar.message}
+				</Alert>
+			</Snackbar>
 		</Box>
 	);
 };

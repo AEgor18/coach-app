@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
 	Box,
 	Grid,
@@ -11,58 +11,156 @@ import {
 	FormControl,
 	InputLabel,
 	Chip,
+	Snackbar,
+	Alert,
 } from '@mui/material';
-
-const mockAthletes = [
-	{
-		id: 1,
-		name: 'Алексей Иванов',
-		sport: 'Плавание',
-		age: 24,
-		phone: '+7 999 123-45-67',
-		status: 'active',
-		progress: 75,
-	},
-	{
-		id: 2,
-		name: 'Мария Смирнова',
-		sport: 'Бег',
-		age: 28,
-		phone: '+7 999 234-56-78',
-		status: 'injured',
-		progress: 45,
-	},
-	{
-		id: 3,
-		name: 'Екатерина Ковалева',
-		sport: 'Бег',
-		age: 31,
-		phone: '+7 999 678-90-12',
-		status: 'active',
-		progress: 81,
-	},
-];
+import { useNavigate } from 'react-router-dom';
+import {
+	deleteAthleteById,
+	getAllAthletes,
+	createAthlete,
+	updateAthleteById,
+} from '../../api/athletes';
+import { Loading } from '../../components/ui/Loading';
+import {
+	AddAthleteModal,
+	EditAthleteModal,
+} from '../../components/modals/athletes';
+import type { AthletesData, AthleteFormData } from '../../types/types';
 
 export const AthletesPage = () => {
-	const [athletes, setAthletes] = useState(mockAthletes);
+	const [athletes, setAthletes] = useState<AthletesData[] | []>([]);
 	const [search, setSearch] = useState('');
 	const [statusFilter, setStatusFilter] = useState('Все');
 	const [sportFilter, setSportFilter] = useState('Все');
+	const [loading, setLoading] = useState(false);
+	const [addModalOpen, setAddModalOpen] = useState(false);
+	const [editModalOpen, setEditModalOpen] = useState(false);
+	const [editingAthlete, setEditingAthlete] = useState<AthletesData | null>(
+		null
+	);
+	const [snackbar, setSnackbar] = useState({
+		open: false,
+		message: '',
+		severity: 'success' as 'success' | 'error',
+	});
+
+	const navigate = useNavigate();
+
+	useEffect(() => {
+		if (!localStorage.getItem('access_token')) {
+			navigate('/auth');
+		}
+		fetchAthletes();
+	}, []);
+
+	const fetchAthletes = async () => {
+		try {
+			setLoading(true);
+			const res = await getAllAthletes(
+				localStorage.getItem('access_token')!
+			);
+
+			if (res) {
+				setAthletes(res);
+			}
+		} catch (error) {
+			console.log(error);
+			showSnackbar('Ошибка при загрузке спортсменов', 'error');
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleAddAthlete = async (athleteData: AthleteFormData) => {
+		try {
+			setLoading(true);
+			await createAthlete(
+				localStorage.getItem('access_token')!,
+				athleteData
+			);
+
+			setAddModalOpen(false);
+			showSnackbar('Спортсмен успешно добавлен', 'success');
+			await fetchAthletes();
+		} catch (error) {
+			console.log(error);
+			showSnackbar('Ошибка при добавлении спортсмена', 'error');
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleEditAthlete = async (athleteData: AthleteFormData) => {
+		if (!editingAthlete) return;
+
+		try {
+			setLoading(true);
+			await updateAthleteById(
+				localStorage.getItem('access_token')!,
+				editingAthlete.id,
+				athleteData
+			);
+
+			setEditModalOpen(false);
+			setEditingAthlete(null);
+			showSnackbar('Данные спортсмена успешно обновлены', 'success');
+			await fetchAthletes();
+		} catch (error) {
+			console.log(error);
+			showSnackbar('Ошибка при обновлении данных спортсмена', 'error');
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleDelete = async (id: number) => {
+		try {
+			setLoading(true);
+			await deleteAthleteById(localStorage.getItem('access_token')!, id);
+			showSnackbar('Спортсмен успешно удален', 'success');
+			await fetchAthletes();
+		} catch (error) {
+			console.log(error);
+			showSnackbar('Ошибка при удалении спортсмена', 'error');
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleEditClick = (athlete: AthletesData) => {
+		setEditingAthlete(athlete);
+		setEditModalOpen(true);
+	};
+
+	const showSnackbar = (message: string, severity: 'success' | 'error') => {
+		setSnackbar({
+			open: true,
+			message,
+			severity,
+		});
+	};
+
+	const handleCloseSnackbar = () => {
+		setSnackbar((prev) => ({ ...prev, open: false }));
+	};
 
 	const filteredAthletes = athletes.filter((a) => {
 		if (search && !a.name.toLowerCase().includes(search.toLowerCase()))
 			return false;
 		if (statusFilter !== 'Все') {
-			if (statusFilter === 'Активные' && a.status !== 'active')
+			if (statusFilter === 'Активные' && a.status !== 'Активен')
 				return false;
-			if (statusFilter === 'С травмами' && a.status !== 'injured')
-				return false;
-			if (statusFilter === 'Неактивные' && a.status !== 'inactive')
+			if (statusFilter === 'С травмами' && a.status !== 'Травма')
 				return false;
 		}
-		if (sportFilter !== 'Все' && a.sport !== sportFilter) return false;
+		if (sportFilter !== 'Все' && a.sport_type !== sportFilter) return false;
 		return true;
 	});
+
+	if (loading && athletes.length === 0) {
+		return <Loading />;
+	}
 
 	return (
 		<Box
@@ -84,20 +182,13 @@ export const AthletesPage = () => {
 					{ label: 'Всего спортсменов', value: athletes.length },
 					{
 						label: 'Активных',
-						value: athletes.filter((a) => a.status === 'active')
+						value: athletes.filter((a) => a.status === 'Активен')
 							.length,
 					},
 					{
 						label: 'С травмами',
-						value: athletes.filter((a) => a.status === 'injured')
+						value: athletes.filter((a) => a.status === 'Травма')
 							.length,
-					},
-					{
-						label: 'Средний прогресс',
-						value: `${Math.round(
-							athletes.reduce((sum, a) => sum + a.progress, 0) /
-								athletes.length
-						)}%`,
 					},
 				].map((stat, i) => (
 					<Grid item xs={12} sm={6} md={3} key={i}>
@@ -138,13 +229,15 @@ export const AthletesPage = () => {
 			>
 				<TextField
 					placeholder='Поиск спортсмена...'
+					size='small'
 					value={search}
 					onChange={(e) => setSearch(e.target.value)}
-					size='small'
 					sx={{
-						backgroundColor: '#FFFFFF',
+						minWidth: 200,
+						backgroundColor: '#E2E8F0',
 						borderRadius: 1,
-						minWidth: 250,
+						flex: 1,
+						background: '#fff',
 					}}
 				/>
 				<Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
@@ -158,7 +251,6 @@ export const AthletesPage = () => {
 							<MenuItem value='Все'>Все статусы</MenuItem>
 							<MenuItem value='Активные'>Активные</MenuItem>
 							<MenuItem value='С травмами'>С травмами</MenuItem>
-							<MenuItem value='Неактивные'>Неактивные</MenuItem>
 						</Select>
 					</FormControl>
 					<FormControl size='small' sx={{ minWidth: 150 }}>
@@ -179,6 +271,7 @@ export const AthletesPage = () => {
 					</FormControl>
 					<Button
 						variant='contained'
+						onClick={() => setAddModalOpen(true)}
 						sx={{
 							backgroundColor: '#377CD6',
 							fontWeight: 600,
@@ -204,11 +297,9 @@ export const AthletesPage = () => {
 								borderRadius: 2,
 								p: 2,
 								borderLeft: `4px solid ${
-									a.status === 'active'
+									a.status === 'Активен'
 										? '#48BB78'
-										: a.status === 'injured'
-										? '#F56565'
-										: '#ED8936'
+										: '#F56565'
 								}`,
 								boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
 							}}
@@ -250,15 +341,13 @@ export const AthletesPage = () => {
 											color: '#4A5568',
 										}}
 									>
-										{a.sport}
+										{a.sport_type}
 									</Typography>
 									<Chip
 										label={
-											a.status === 'active'
-												? 'Активен'
-												: a.status === 'injured'
-												? 'Травма'
-												: 'Неактивный'
+											a.status === 'Активен'
+												? 'Активный'
+												: 'Травма'
 										}
 										size='small'
 										sx={{ mt: 0.5 }}
@@ -302,62 +391,79 @@ export const AthletesPage = () => {
 							</Box>
 							<Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
 								<Button
-									variant='outlined'
-									size='small'
-									fullWidth
-									sx={{
-										fontWeight: 600,
-										'&:hover': {
-											transition: '0.3s ease-in-out',
-											transform: 'translateY(-1px)',
-										},
-									}}
-								>
-									Профиль
-								</Button>
-								<Button
-									variant='outlined'
-									size='small'
-									fullWidth
-									sx={{
-										color: '#2D3748',
-										borderColor: '#E2E8F0',
-										backgroundColor: '#E2E8F0',
-										fontSize: '12px',
-										fontWeight: 600,
-										'&:hover': {
-											backgroundColor: '#CBD5E0',
-											transition: '0.3s ease-in-out',
-											transform: 'translateY(-1px)',
-										},
-									}}
-								>
-									Тренировки
-								</Button>
-								<Button
 									variant='contained'
-									size='small'
+									fullWidth
+									onClick={() => handleEditClick(a)}
 									sx={{
-										backgroundColor: '#377CD6',
+										fontSize: 12,
 										fontWeight: 600,
-										fontSize: '12px',
+										backgroundColor: '#377CD6',
 										'&:hover': {
 											backgroundColor: '#2B6CB0',
 											transform: 'translateY(-1px)',
-											boxShadow:
-												'0 6px 12px rgba(55, 124, 214, 0.3)',
+											transition: '0.3s ease-in-out',
 										},
-										transition: 'all 0.3s ease',
-										px: 3,
 									}}
 								>
-									Питание
+									Редактировать
+								</Button>
+								<Button
+									variant='contained'
+									fullWidth
+									sx={{
+										fontSize: 12,
+										fontWeight: 600,
+										backgroundColor: '#F56565',
+										'&:hover': {
+											backgroundColor: '#C53030',
+											transform: 'translateY(-1px)',
+											transition: '0.3s ease-in-out',
+										},
+									}}
+									onClick={() => handleDelete(a.id)}
+								>
+									Удалить
 								</Button>
 							</Box>
 						</Card>
 					</Grid>
 				))}
 			</Grid>
+
+			{/* Модальное окно добавления */}
+			<AddAthleteModal
+				open={addModalOpen}
+				onClose={() => setAddModalOpen(false)}
+				onSave={handleAddAthlete}
+				loading={loading}
+			/>
+
+			{/* Модальное окно редактирования */}
+			<EditAthleteModal
+				open={editModalOpen}
+				onClose={() => {
+					setEditModalOpen(false);
+					setEditingAthlete(null);
+				}}
+				onSave={handleEditAthlete}
+				athlete={editingAthlete}
+				loading={loading}
+			/>
+
+			<Snackbar
+				open={snackbar.open}
+				autoHideDuration={6000}
+				onClose={handleCloseSnackbar}
+				anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+			>
+				<Alert
+					onClose={handleCloseSnackbar}
+					severity={snackbar.severity}
+					variant='filled'
+				>
+					{snackbar.message}
+				</Alert>
+			</Snackbar>
 		</Box>
 	);
 };

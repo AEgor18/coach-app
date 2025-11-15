@@ -1,36 +1,185 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
 	Box,
-	Typography,
-	Card,
-	CardContent,
-	Button,
-	Select,
-	MenuItem,
-	FormControl,
-	InputLabel,
 	Grid,
+	Card,
+	Typography,
+	Button,
+	TextField,
+	Snackbar,
+	Alert,
 } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import {
+	deleteReportById,
+	getAllReports,
+	createReport,
+	updateReportById,
+} from '../../api/reports';
+import { Loading } from '../../components/ui/Loading';
+import type { ReportData, ReportFormData } from '../../types/types';
+import {
+	AddReportModal,
+	EditReportModal,
+} from '../../components/modals/reports';
 
-export const ReportsPage = () => {
+export const ReportsPage: React.FC = () => {
+	const [reports, setReports] = useState<ReportData[]>([]);
+	const [search, setSearch] = useState('');
+	const [addModalOpen, setAddModalOpen] = useState(false);
+	const [editModalOpen, setEditModalOpen] = useState(false);
+	const [selectedReport, setSelectedReport] = useState<ReportData | null>(
+		null
+	);
+	const [loading, setLoading] = useState(false);
+	const [snackbar, setSnackbar] = useState({
+		open: false,
+		message: '',
+		severity: 'success' as 'success' | 'error',
+	});
+
+	const navigate = useNavigate();
+
+	useEffect(() => {
+		if (!localStorage.getItem('access_token')) {
+			navigate('/auth');
+		}
+
+		fetchReports();
+	}, []);
+
+	const fetchReports = async () => {
+		try {
+			setLoading(true);
+			const res = await getAllReports(
+				localStorage.getItem('access_token')!
+			);
+
+			if (res) {
+				setReports(res);
+			}
+		} catch (error) {
+			console.log(error);
+			showSnackbar('Ошибка при загрузке отчетов', 'error');
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleAddReport = async (reportData: ReportFormData) => {
+		try {
+			setLoading(true);
+			await createReport(
+				localStorage.getItem('access_token')!,
+				reportData
+			);
+			setAddModalOpen(false);
+			showSnackbar('Отчет успешно создан', 'success');
+			await fetchReports();
+		} catch (error) {
+			console.log(error);
+			showSnackbar('Ошибка при создании отчета', 'error');
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleEditReport = async (reportData: ReportFormData) => {
+		if (!selectedReport) return;
+
+		try {
+			setLoading(true);
+			await updateReportById(
+				localStorage.getItem('access_token')!,
+				selectedReport.id,
+				reportData
+			);
+			setEditModalOpen(false);
+			setSelectedReport(null);
+			showSnackbar('Отчет успешно обновлен', 'success');
+			await fetchReports();
+		} catch (error) {
+			console.log(error);
+			showSnackbar('Ошибка при обновлении отчета', 'error');
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleOpenEdit = (report: ReportData) => {
+		setSelectedReport(report);
+		setEditModalOpen(true);
+	};
+
+	const handleCloseEdit = () => {
+		setEditModalOpen(false);
+		setSelectedReport(null);
+	};
+
+	const handleDelete = async (id: number) => {
+		try {
+			setLoading(true);
+			await deleteReportById(localStorage.getItem('access_token')!, id);
+			showSnackbar('Отчет успешно удален', 'success');
+			await fetchReports();
+		} catch (error) {
+			console.log(error);
+			showSnackbar('Ошибка при удалении отчета', 'error');
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const showSnackbar = (message: string, severity: 'success' | 'error') => {
+		setSnackbar({
+			open: true,
+			message,
+			severity,
+		});
+	};
+
+	const handleCloseSnackbar = () => {
+		setSnackbar((prev) => ({ ...prev, open: false }));
+	};
+
+	const visibleReports = reports.filter((report) => {
+		const q = search.trim().toLowerCase();
+		if (q && !report.title.toLowerCase().includes(q)) return false;
+		return true;
+	});
+
+	if (loading && reports.length === 0) {
+		return <Loading />;
+	}
+
 	return (
-		<Box sx={{ backgroundColor: '#F7FAFC', minHeight: '100vh', p: 3 }}>
+		<Box
+			sx={{
+				backgroundColor: '#F7FAFC',
+				minHeight: '100vh',
+				p: 3,
+			}}
+		>
 			<Typography
 				variant='h4'
-				component='h1'
-				sx={{ fontWeight: 700, color: '#2D3748', mb: 4 }}
+				sx={{ fontWeight: 700, color: '#2D3748', mb: 3 }}
 			>
-				Отчёты по посещаемости
+				Отчеты
 			</Typography>
 
 			<Grid container spacing={3} sx={{ mb: 4 }}>
 				{[
-					{ label: 'Всего отчётов', value: '3' },
-					{ label: 'Средняя посещаемость', value: '89%' },
-					{ label: 'Создано за месяц', value: '2' },
-					{ label: 'Текущая неделя', value: '92%' },
-				].map((stat, index) => (
-					<Grid item xs={12} sm={6} md={3} key={index}>
+					{ label: 'Всего отчетов', value: reports.length },
+					{
+						label: 'Высокая посещаемость',
+						value: reports.filter((r) => r.attendance >= 80).length,
+					},
+					{
+						label: 'Низкая посещаемость',
+						value: reports.filter((r) => r.attendance < 60).length,
+					},
+				].map((stat, idx) => (
+					<Grid item xs={12} sm={4} key={idx}>
 						<Card
 							sx={{
 								textAlign: 'center',
@@ -59,27 +208,23 @@ export const ReportsPage = () => {
 				))}
 			</Grid>
 
-			<Box
-				sx={{
-					display: 'flex',
-					alignItems: 'center',
-					mb: 4,
-					flexWrap: 'wrap',
-					gap: 2,
-				}}
-			>
-				<FormControl size='small' sx={{ minWidth: 100 }}>
-					<InputLabel>Период</InputLabel>
-					<Select value='all' label='Период'>
-						<MenuItem value='all'>Все периоды</MenuItem>
-						<MenuItem value='week'>За неделю</MenuItem>
-						<MenuItem value='month'>За месяц</MenuItem>
-						<MenuItem value='quarter'>За квартал</MenuItem>
-					</Select>
-				</FormControl>
-
+			<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 4 }}>
+				<TextField
+					placeholder='Поиск отчета...'
+					size='small'
+					value={search}
+					onChange={(e) => setSearch(e.target.value)}
+					sx={{
+						minWidth: 200,
+						backgroundColor: '#E2E8F0',
+						borderRadius: 1,
+						flex: 1,
+						background: '#fff',
+					}}
+				/>
 				<Button
 					variant='contained'
+					onClick={() => setAddModalOpen(true)}
 					sx={{
 						backgroundColor: '#377CD6',
 						fontWeight: 600,
@@ -97,217 +242,249 @@ export const ReportsPage = () => {
 			</Box>
 
 			<Grid container spacing={3}>
-				{[
-					{
-						name: 'Посещаемость за неделю',
-						period: '01.12.2025 - 07.12.2025',
-						created: '08.12.2025',
-						stats: [
-							{ label: 'Посещаемость', value: '92%' },
-							{ label: 'Тренировок', value: '18' },
-							{ label: 'Пропуска', value: '3' },
-							{ label: 'Участников', value: '15' },
-						],
-					},
-					{
-						name: 'Посещаемость за ноябрь',
-						period: '01.11.2025 - 30.11.2025',
-						created: '01.12.2025',
-						stats: [
-							{ label: 'Посещаемость', value: '87%' },
-							{ label: 'Тренировок', value: '65' },
-							{ label: 'Пропуска', value: '8' },
-							{ label: 'Участников', value: '12' },
-						],
-					},
-					{
-						name: 'Посещаемость за октябрь',
-						period: '01.10.2025 - 31.10.2025',
-						created: '01.11.2025',
-						stats: [
-							{ label: 'Посещаемость', value: '91%' },
-							{ label: 'Тренировок', value: '58' },
-							{ label: 'Пропуска', value: '5' },
-							{ label: 'Участников', value: '10' },
-						],
-					},
-				].map((report, index) => (
-					<Grid item xs={12} md={6} lg={4} key={index}>
+				{visibleReports.map((report) => (
+					<Grid item xs={12} sm={6} md={4} key={report.id}>
 						<Card
 							sx={{
 								borderRadius: 2,
+								p: 3,
+								borderLeft: `4px solid ${
+									report.attendance >= 80
+										? '#48BB78'
+										: report.attendance >= 60
+										? '#ED8936'
+										: '#F56565'
+								}`,
 								boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
-								borderLeft: '4px solid #3182CE',
-								transition: 'transform 0.3s, box-shadow 0.3s',
+								transition: 'transform 0.2s',
+								'&:hover': { transform: 'translateY(-2px)' },
 							}}
 						>
-							<CardContent>
-								<Box
+							<Typography
+								variant='h6'
+								sx={{
+									fontWeight: 700,
+									color: '#2D3748',
+									mb: 2,
+								}}
+							>
+								{report.title}
+							</Typography>
+
+							<Box sx={{ mb: 2 }}>
+								<Typography
 									sx={{
-										display: 'flex',
-										alignItems: 'flex-start',
-										mb: 2,
+										fontSize: 12,
+										color: '#4A5568',
+										mb: 1,
 									}}
 								>
-									<Box
+									Период:{' '}
+									{new Date(
+										report.start_date
+									).toLocaleDateString()}{' '}
+									-{' '}
+									{new Date(
+										report.end_date
+									).toLocaleDateString()}
+								</Typography>
+								<Typography
+									sx={{
+										fontSize: 12,
+										color: '#4A5568',
+										mb: 1,
+									}}
+								>
+									Создан:{' '}
+									{new Date(
+										report.created_date
+									).toLocaleDateString()}
+								</Typography>
+							</Box>
+
+							<Grid container spacing={2} sx={{ mb: 2 }}>
+								<Grid item xs={6}>
+									<Card
 										sx={{
-											width: 50,
-											height: 50,
-											borderRadius: 1.5,
-											background:
-												'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-											display: 'flex',
-											alignItems: 'center',
-											justifyContent: 'center',
-											color: 'white',
-											fontSize: 20,
-											mr: 2,
+											textAlign: 'center',
+											p: 1,
+											backgroundColor: '#EBF8FF',
 										}}
 									>
-										📊
-									</Box>
-									<Box sx={{ flex: 1 }}>
 										<Typography
 											sx={{
-												fontSize: 18,
+												fontSize: 20,
 												fontWeight: 700,
-												color: '#2D3748',
-												mb: 0.5,
+												color: '#3182CE',
 											}}
 										>
-											{report.name}
+											{report.attendance}%
 										</Typography>
 										<Typography
 											sx={{
-												fontSize: 12,
-												color: '#4A5568',
+												fontSize: 10,
+												color: '#2C5282',
 											}}
 										>
-											{report.period}
+											Посещаемость
 										</Typography>
-									</Box>
-								</Box>
-
-								<Box sx={{ mb: 2 }}>
-									<Box
-										sx={{
-											display: 'flex',
-											justifyContent: 'space-between',
-											mb: 1,
-										}}
-									>
-										<Typography
-											sx={{
-												fontSize: 14,
-												color: '#4A5568',
-											}}
-										>
-											Создан:
-										</Typography>
-										<Typography
-											sx={{
-												fontSize: 14,
-												fontWeight: 500,
-												color: '#2D3748',
-											}}
-										>
-											{report.created}
-										</Typography>
-									</Box>
-								</Box>
-
-								<Grid container spacing={1.5} sx={{ mb: 2.5 }}>
-									{report.stats.map((stat, idx) => (
-										<Grid item xs={6} key={idx}>
-											<Box
-												sx={{
-													textAlign: 'center',
-													p: 1.5,
-													backgroundColor: '#F7FAFC',
-													borderRadius: 1,
-												}}
-											>
-												<Typography
-													sx={{
-														fontSize: 20,
-														fontWeight: 700,
-														color: '#377CD6',
-														mb: 0.5,
-													}}
-												>
-													{stat.value}
-												</Typography>
-												<Typography
-													sx={{
-														fontSize: 12,
-														color: '#4A5568',
-													}}
-												>
-													{stat.label}
-												</Typography>
-											</Box>
-										</Grid>
-									))}
+									</Card>
 								</Grid>
+								<Grid item xs={6}>
+									<Card
+										sx={{
+											textAlign: 'center',
+											p: 1,
+											backgroundColor: '#F0FFF4',
+										}}
+									>
+										<Typography
+											sx={{
+												fontSize: 20,
+												fontWeight: 700,
+												color: '#38A169',
+											}}
+										>
+											{report.trainings}
+										</Typography>
+										<Typography
+											sx={{
+												fontSize: 10,
+												color: '#276749',
+											}}
+										>
+											Тренировки
+										</Typography>
+									</Card>
+								</Grid>
+								<Grid item xs={6}>
+									<Card
+										sx={{
+											textAlign: 'center',
+											p: 1,
+											backgroundColor: '#FFF5F5',
+										}}
+									>
+										<Typography
+											sx={{
+												fontSize: 20,
+												fontWeight: 700,
+												color: '#E53E3E',
+											}}
+										>
+											{report.skips}
+										</Typography>
+										<Typography
+											sx={{
+												fontSize: 10,
+												color: '#C53030',
+											}}
+										>
+											Пропуски
+										</Typography>
+									</Card>
+								</Grid>
+								<Grid item xs={6}>
+									<Card
+										sx={{
+											textAlign: 'center',
+											p: 1,
+											backgroundColor: '#EDF2F7',
+										}}
+									>
+										<Typography
+											sx={{
+												fontSize: 20,
+												fontWeight: 700,
+												color: '#4A5568',
+											}}
+										>
+											{report.participants}
+										</Typography>
+										<Typography
+											sx={{
+												fontSize: 10,
+												color: '#2D3748',
+											}}
+										>
+											Участники
+										</Typography>
+									</Card>
+								</Grid>
+							</Grid>
 
-								<Box sx={{ display: 'flex', gap: 1 }}>
-									<Button
-										variant='outlined'
-										size='small'
-										sx={{
-											flex: 1,
-											color: '#F56565',
-											borderColor: '#F56565',
-											fontSize: 12,
-											fontWeight: 600,
-											'&:hover': {
-												backgroundColor: '#F56565',
-												color: 'white',
-												transform: 'translateY(-1px)',
-												transition: '0.3s ease-in-out',
-											},
-										}}
-									>
-										Удалить
-									</Button>
-									<Button
-										variant='outlined'
-										size='small'
-										sx={{
-											flex: 1,
-											fontSize: 12,
-											fontWeight: 600,
-											'&:hover': {
-												transition: '0.3s ease-in-out',
-												transform: 'translateY(-1px)',
-											},
-										}}
-									>
-										Редактировать
-									</Button>
-									<Button
-										variant='contained'
-										size='small'
-										sx={{
-											flex: 1,
-											backgroundColor: '#377CD6',
-											fontSize: 12,
-											fontWeight: 600,
-											'&:hover': {
-												backgroundColor: '#2B6CB0',
-												transition: '0.3s ease-in-out',
-												transform: 'translateY(-1px)',
-											},
-										}}
-									>
-										Скачать PDF
-									</Button>
-								</Box>
-							</CardContent>
+							<Box sx={{ display: 'flex', gap: 1 }}>
+								<Button
+									variant='contained'
+									fullWidth
+									sx={{
+										fontSize: 12,
+										fontWeight: 600,
+										backgroundColor: '#377CD6',
+										'&:hover': {
+											backgroundColor: '#2B6CB0',
+											transform: 'translateY(-1px)',
+										},
+										transition: '0.3s ease-in-out',
+									}}
+									onClick={() => handleOpenEdit(report)}
+								>
+									Редактировать
+								</Button>
+								<Button
+									variant='contained'
+									fullWidth
+									sx={{
+										fontSize: 12,
+										fontWeight: 600,
+										backgroundColor: '#F56565',
+										'&:hover': {
+											backgroundColor: '#C53030',
+											transform: 'translateY(-1px)',
+										},
+										transition: '0.3s ease-in-out',
+									}}
+									onClick={() => handleDelete(report.id)}
+								>
+									Удалить
+								</Button>
+							</Box>
 						</Card>
 					</Grid>
 				))}
 			</Grid>
+
+			{/* Модальное окно добавления */}
+			<AddReportModal
+				open={addModalOpen}
+				onClose={() => setAddModalOpen(false)}
+				onSave={handleAddReport}
+				loading={loading}
+			/>
+
+			{/* Модальное окно редактирования */}
+			<EditReportModal
+				open={editModalOpen}
+				onClose={handleCloseEdit}
+				onSave={handleEditReport}
+				report={selectedReport}
+				loading={loading}
+			/>
+
+			<Snackbar
+				open={snackbar.open}
+				autoHideDuration={6000}
+				onClose={handleCloseSnackbar}
+				anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+			>
+				<Alert
+					onClose={handleCloseSnackbar}
+					severity={snackbar.severity}
+					variant='filled'
+				>
+					{snackbar.message}
+				</Alert>
+			</Snackbar>
 		</Box>
 	);
 };

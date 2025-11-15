@@ -16,11 +16,6 @@ export function Header() {
 				>
 					Тренерский центр
 				</Typography>
-				<Avatar sx={{ background: '#fff', mt: 2, cursor: 'pointer' }}>
-					<Typography sx={{ color: '#377CD6', fontWeight: 600 }}>
-						ИП
-					</Typography>
-				</Avatar>
 			</Toolbar>
 		</AppBar>
 	);

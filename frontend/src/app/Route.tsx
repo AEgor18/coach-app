@@ -20,9 +20,9 @@ export function Router() {
 					<Route path='nutrition' element={<NutritionPage />} />
 					<Route path='reports' element={<ReportsPage />} />
 					<Route path='trainings' element={<TrainingsPage />} />
-					<Route path='/auth' element={<AuthPage />} />
 					<Route path='/settings' element={<SettingsPage />} />
 				</Route>
+				<Route path='/auth' element={<AuthPage />} />
 			</Routes>
 		</BrowserRouter>
 	);

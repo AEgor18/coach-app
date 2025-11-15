@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
 	Box,
 	Grid,
@@ -10,92 +10,164 @@ import {
 	MenuItem,
 	FormControl,
 	InputLabel,
+	Snackbar,
+	Alert,
 } from '@mui/material';
-
-type Training = {
-	id: number;
-	title: string;
-	type: 'Индивидуальная' | 'Групповая' | 'Силовая' | 'Кардио';
-	status: 'Запланирована' | 'Завершена' | 'В процессе';
-	datetime: string;
-	duration: string;
-	level: string;
-	description: string;
-	athletes: string[];
-};
-
-const mockTrainings: Training[] = [
-	{
-		id: 1,
-		title: 'Силовая подготовка',
-		type: 'Индивидуальная',
-		status: 'Запланирована',
-		datetime: '15 дек, 10:00',
-		duration: '60 минут',
-		level: 'Продвинутый',
-		description: 'Основной акцент на упражнениях со свободными весами.',
-		athletes: ['Алексей Иванов'],
-	},
-	{
-		id: 2,
-		title: 'Утреннее кардио',
-		type: 'Групповая',
-		status: 'Завершена',
-		datetime: '14 дек, 08:00',
-		duration: '45 минут',
-		level: 'Средний',
-		description: 'Интервальная тренировка на беговой дорожке и эллипсоиде.',
-		athletes: ['Мария С.', 'Екатерина К.', 'Сергей В.'],
-	},
-	{
-		id: 3,
-		title: 'Тяжелая атлетика',
-		type: 'Силовая',
-		status: 'Запланирована',
-		datetime: 'Сегодня, 18:00',
-		duration: '90 минут',
-		level: 'Профессиональный',
-		description:
-			'Работа с максимальными весами. Становая тяга, приседания, жим лежа.',
-		athletes: ['Дмитрий Козлов'],
-	},
-];
+import { useNavigate } from 'react-router-dom';
+import type { TrainingsPlan, TrainingFormData } from '../../types/types';
+import { Loading } from '../../components/ui/Loading';
+import {
+	deleteTrainingById,
+	getAllTrainings,
+	createTraining,
+	updateTrainingById,
+} from '../../api/trainings';
+import {
+	AddTrainingModal,
+	EditTrainingModal,
+} from '../../components/modals/trainings';
 
 export const TrainingsPage = () => {
-	const [trainings, setTrainings] = useState(mockTrainings);
+	const [trainings, setTrainings] = useState<TrainingsPlan[]>([]);
 	const [search, setSearch] = useState('');
 	const [statusFilter, setStatusFilter] = useState('Все статусы');
 	const [typeFilter, setTypeFilter] = useState('Все типы');
+	const [loading, setLoading] = useState(false);
+	const [addModalOpen, setAddModalOpen] = useState(false);
+	const [editModalOpen, setEditModalOpen] = useState(false);
+	const [selectedTraining, setSelectedTraining] =
+		useState<TrainingsPlan | null>(null);
+	const [snackbar, setSnackbar] = useState({
+		open: false,
+		message: '',
+		severity: 'success' as 'success' | 'error',
+	});
 
-	const [editOpen, setEditOpen] = useState(false);
-	const [selected, setSelected] = useState<Training | null>(null);
+	const navigate = useNavigate();
 
-	const handleOpenEdit = (t: Training) => {
-		setSelected(t);
-		setEditOpen(true);
+	useEffect(() => {
+		if (!localStorage.getItem('access_token')) {
+			navigate('/auth');
+		}
+
+		fetchPlans();
+	}, []);
+
+	const fetchPlans = async () => {
+		try {
+			setLoading(true);
+			const res = await getAllTrainings(
+				localStorage.getItem('access_token')!
+			);
+
+			if (res) {
+				setTrainings(res);
+			}
+		} catch (error) {
+			console.log(error);
+			showSnackbar('Ошибка при загрузке тренировок', 'error');
+		} finally {
+			setLoading(false);
+		}
 	};
+
+	const handleAddTraining = async (trainingData: TrainingFormData) => {
+		try {
+			setLoading(true);
+			await createTraining(
+				localStorage.getItem('access_token')!,
+				trainingData
+			);
+			setAddModalOpen(false);
+			showSnackbar('Тренировка успешно создана', 'success');
+			await fetchPlans();
+		} catch (error) {
+			console.log(error);
+			showSnackbar('Ошибка при создании тренировки', 'error');
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleEditTraining = async (trainingData: TrainingFormData) => {
+		if (!selectedTraining) return;
+
+		try {
+			setLoading(true);
+			await updateTrainingById(
+				localStorage.getItem('access_token')!,
+				selectedTraining.id,
+				trainingData
+			);
+			setEditModalOpen(false);
+			setSelectedTraining(null);
+			showSnackbar('Тренировка успешно обновлена', 'success');
+			await fetchPlans();
+		} catch (error) {
+			console.log(error);
+			showSnackbar('Ошибка при обновлении тренировки', 'error');
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleOpenEdit = (training: TrainingsPlan) => {
+		setSelectedTraining(training);
+		setEditModalOpen(true);
+	};
+
 	const handleCloseEdit = () => {
-		setSelected(null);
-		setEditOpen(false);
+		setSelectedTraining(null);
+		setEditModalOpen(false);
 	};
-	const handleDelete = (id: number) => {
-		setTrainings((prev) => prev.filter((t) => t.id !== id));
+
+	const handleDelete = async (id: number) => {
+		try {
+			setLoading(true);
+			await deleteTrainingById(localStorage.getItem('access_token')!, id);
+			showSnackbar('Тренировка успешно удалена', 'success');
+			await fetchPlans();
+		} catch (error) {
+			console.log(error);
+			showSnackbar('Ошибка при удалении тренировки', 'error');
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const showSnackbar = (message: string, severity: 'success' | 'error') => {
+		setSnackbar({
+			open: true,
+			message,
+			severity,
+		});
+	};
+
+	const handleCloseSnackbar = () => {
+		setSnackbar((prev) => ({ ...prev, open: false }));
 	};
 
 	const visible = trainings.filter((t) => {
 		const q = search.trim().toLowerCase();
 		if (
 			q &&
-			!`${t.title} ${t.description} ${t.athletes.join(' ')}`
+			!`${t.title} ${t.description} ${t.athletes
+				.map((a) => a.name)
+				.join(' ')}`
 				.toLowerCase()
 				.includes(q)
 		)
 			return false;
 		if (statusFilter !== 'Все статусы' && t.status !== statusFilter)
 			return false;
-		if (typeFilter !== 'Все типы' && t.type !== typeFilter) return false;
+		if (typeFilter !== 'Все типы' && t.training_type !== typeFilter)
+			return false;
 		return true;
 	});
+
+	if (loading && trainings.length === 0) {
+		return <Loading />;
+	}
 
 	return (
 		<Box
@@ -118,13 +190,14 @@ export const TrainingsPage = () => {
 					{
 						label: 'Запланировано',
 						value: trainings.filter(
-							(t) => t.status === 'Запланирована'
+							(t) => t.status === 'Запланированная'
 						).length,
 					},
 					{
 						label: 'Завершено',
-						value: trainings.filter((t) => t.status === 'Завершена')
-							.length,
+						value: trainings.filter(
+							(t) => t.status === 'Завершенная'
+						).length,
 					},
 				].map((stat, idx) => (
 					<Grid item xs={12} sm={4} key={idx}>
@@ -177,13 +250,14 @@ export const TrainingsPage = () => {
 						onChange={(e) =>
 							setStatusFilter(String(e.target.value))
 						}
+						label='Статус'
 					>
 						<MenuItem value='Все статусы'>Все статусы</MenuItem>
-						<MenuItem value='Запланирована'>
+						<MenuItem value='Запланированная'>
 							Запланированные
 						</MenuItem>
-						<MenuItem value='Завершена'>Завершенные</MenuItem>
 						<MenuItem value='В процессе'>В процессе</MenuItem>
+						<MenuItem value='Завершенная'>Завершенные</MenuItem>
 					</Select>
 				</FormControl>
 				<FormControl size='small' sx={{ minWidth: 150 }}>
@@ -191,18 +265,20 @@ export const TrainingsPage = () => {
 					<Select
 						value={typeFilter}
 						onChange={(e) => setTypeFilter(String(e.target.value))}
+						label='Тип'
 					>
 						<MenuItem value='Все типы'>Все типы</MenuItem>
-						<MenuItem value='Индивидуальная'>
+						<MenuItem value='Индивидуальные'>
 							Индивидуальные
 						</MenuItem>
-						<MenuItem value='Групповая'>Групповые</MenuItem>
-						<MenuItem value='Силовая'>Силовые</MenuItem>
+						<MenuItem value='Групповые'>Групповые</MenuItem>
+						<MenuItem value='Силовые'>Силовые</MenuItem>
 						<MenuItem value='Кардио'>Кардио</MenuItem>
 					</Select>
 				</FormControl>
 				<Button
 					variant='contained'
+					onClick={() => setAddModalOpen(true)}
 					sx={{
 						backgroundColor: '#377CD6',
 						fontWeight: 600,
@@ -226,9 +302,16 @@ export const TrainingsPage = () => {
 							sx={{
 								p: 2,
 								borderRadius: 2,
-								borderLeft: `4px solid #377CD6`,
+								borderLeft: `4px solid ${
+									t.status === 'Запланированная'
+										? '#377CD6'
+										: t.status === 'В процессе'
+										? '#ED8936'
+										: '#48BB78'
+								}`,
 								boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
 								transition: 'transform 0.3s',
+								minWidth: 300,
 							}}
 						>
 							<Box
@@ -271,7 +354,7 @@ export const TrainingsPage = () => {
 											color: '#4A5568',
 										}}
 									>
-										{t.type}
+										{t.training_type}
 									</Typography>
 								</Box>
 							</Box>
@@ -285,7 +368,7 @@ export const TrainingsPage = () => {
 							>
 								Дата:{' '}
 								<Box component='span' sx={{ color: '#2D3748' }}>
-									{t.datetime}
+									{t.date}
 								</Box>
 							</Typography>
 							<Typography
@@ -297,7 +380,7 @@ export const TrainingsPage = () => {
 							>
 								Продолжительность:{' '}
 								<Box component='span' sx={{ color: '#2D3748' }}>
-									{t.duration}
+									{t.duration} мин
 								</Box>
 							</Typography>
 							<Typography
@@ -309,20 +392,64 @@ export const TrainingsPage = () => {
 							>
 								Уровень:{' '}
 								<Box component='span' sx={{ color: '#2D3748' }}>
-									{t.level}
+									{t.skill_level}
 								</Box>
 							</Typography>
 							<Typography
 								sx={{
 									fontSize: 12,
-									backgroundColor: '#E2E8F0',
-									borderRadius: 1,
-									p: 1,
-									mb: 2,
+									color: '#4A5568',
+									mb: 1,
 								}}
 							>
-								{t.description}
+								Статус:{' '}
+								<Box
+									component='span'
+									sx={{
+										color:
+											t.status === 'Запланированная'
+												? '#377CD6'
+												: t.status === 'В процессе'
+												? '#ED8936'
+												: '#48BB78',
+										fontWeight: 600,
+									}}
+								>
+									{t.status}
+								</Box>
 							</Typography>
+							{t.athletes.length > 0 && (
+								<Typography
+									sx={{
+										fontSize: 12,
+										color: '#4A5568',
+										mb: 1,
+									}}
+								>
+									Участники:{' '}
+									<Box
+										component='span'
+										sx={{ color: '#2D3748' }}
+									>
+										{t.athletes
+											.map((a) => a.name)
+											.join(', ')}
+									</Box>
+								</Typography>
+							)}
+							{t.description && (
+								<Typography
+									sx={{
+										fontSize: 12,
+										backgroundColor: '#E2E8F0',
+										borderRadius: 1,
+										p: 1,
+										mb: 2,
+									}}
+								>
+									{t.description}
+								</Typography>
+							)}
 
 							<Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
 								<Button
@@ -366,6 +493,38 @@ export const TrainingsPage = () => {
 					</Grid>
 				))}
 			</Grid>
+
+			{/* Модальное окно добавления */}
+			<AddTrainingModal
+				open={addModalOpen}
+				onClose={() => setAddModalOpen(false)}
+				onSave={handleAddTraining}
+				loading={loading}
+			/>
+
+			{/* Модальное окно редактирования */}
+			<EditTrainingModal
+				open={editModalOpen}
+				onClose={handleCloseEdit}
+				onSave={handleEditTraining}
+				training={selectedTraining}
+				loading={loading}
+			/>
+
+			<Snackbar
+				open={snackbar.open}
+				autoHideDuration={6000}
+				onClose={handleCloseSnackbar}
+				anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+			>
+				<Alert
+					onClose={handleCloseSnackbar}
+					severity={snackbar.severity}
+					variant='filled'
+				>
+					{snackbar.message}
+				</Alert>
+			</Snackbar>
 		</Box>
 	);
 };
