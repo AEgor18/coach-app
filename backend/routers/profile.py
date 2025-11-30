@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from core.security import create_access_token, create_refresh_token, verify_token
 from crud.profile import (
+    authenticate_coach,
     create_coach_profile,
     delete_coach_profile,
     get_coach_by_email,
     update_coach_profile,
-    authenticate_coach,
 )
 from database import get_db
 from dependencies.auth import get_current_coach
@@ -18,7 +19,6 @@ from schemas.profile import (
     LoginRequest,
     Token,
 )
-from core.security import create_access_token, create_refresh_token, verify_token
 
 router = APIRouter(prefix="/api/profile", tags=["Coach Profile"])
 
@@ -43,7 +43,7 @@ async def login_coach(login_data: LoginRequest, db: Session = Depends(get_db)):
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
-        "token_type": "bearer"
+        "token_type": "bearer",
     }
 
 
@@ -65,9 +65,9 @@ async def get_current_coach_profile(coach: CoachProfile = Depends(get_current_co
 
 @router.put("/", response_model=CoachProfileResponse)
 async def update_coach_profile_data(
-        profile_update: CoachProfileUpdate,
-        db: Session = Depends(get_db),
-        coach: CoachProfile = Depends(get_current_coach)
+    profile_update: CoachProfileUpdate,
+    db: Session = Depends(get_db),
+    coach: CoachProfile = Depends(get_current_coach),
 ):
     updated = update_coach_profile(db, profile_update)
     if not updated:
@@ -77,8 +77,7 @@ async def update_coach_profile_data(
 
 @router.delete("/", status_code=204)
 async def delete_coach_profile_endpoint(
-        db: Session = Depends(get_db),
-        coach: CoachProfile = Depends(get_current_coach)
+    db: Session = Depends(get_db), coach: CoachProfile = Depends(get_current_coach)
 ):
     deleted = delete_coach_profile(db)
     if not deleted:

@@ -1,4 +1,5 @@
 from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -19,8 +20,7 @@ router = APIRouter(prefix="/api/reports", tags=["Reports"])
 
 @router.get("/", response_model=List[ReportResponse])
 async def read_reports(
-    db: Session = Depends(get_db),
-    coach: CoachProfile = Depends(get_current_coach)
+    db: Session = Depends(get_db), coach: CoachProfile = Depends(get_current_coach)
 ):
     """Получить все отчеты"""
     reports = get_reports(db)
@@ -31,7 +31,7 @@ async def read_reports(
 async def create_new_report(
     report: ReportCreate,
     db: Session = Depends(get_db),
-    coach: CoachProfile = Depends(get_current_coach)
+    coach: CoachProfile = Depends(get_current_coach),
 ):
     """Создать новый отчет"""
     return create_report(db=db, report=report)
@@ -41,7 +41,7 @@ async def create_new_report(
 async def read_report(
     report_id: int,
     db: Session = Depends(get_db),
-    coach: CoachProfile = Depends(get_current_coach)
+    coach: CoachProfile = Depends(get_current_coach),
 ):
     """Получить отчет по ID"""
     db_report = get_report(db, report_id=report_id)
@@ -57,7 +57,7 @@ async def update_report_data(
     report_id: int,
     report_update: ReportUpdate,
     db: Session = Depends(get_db),
-    coach: CoachProfile = Depends(get_current_coach)
+    coach: CoachProfile = Depends(get_current_coach),
 ):
     """Обновить данные отчета"""
     db_report = update_report(db, report_id=report_id, report_update=report_update)
@@ -72,7 +72,7 @@ async def update_report_data(
 async def delete_report_endpoint(
     report_id: int,
     db: Session = Depends(get_db),
-    coach: CoachProfile = Depends(get_current_coach)
+    coach: CoachProfile = Depends(get_current_coach),
 ):
     """Удалить отчет"""
     success = delete_report(db, report_id=report_id)

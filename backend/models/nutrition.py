@@ -1,13 +1,17 @@
 from enum import Enum
-from sqlalchemy import Column, Integer, String, Enum as SQLEnum, Text, Table, ForeignKey
+
+from sqlalchemy import Column
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import ForeignKey, Integer, String, Table, Text
 from sqlalchemy.orm import relationship
+
 from database import Base
 
 nutrition_athletes = Table(
-    'nutrition_athletes',
+    "nutrition_athletes",
     Base.metadata,
-    Column('nutrition_plan_id', Integer, ForeignKey('nutrition_plans.id')),
-    Column('athlete_id', Integer, ForeignKey('athletes.id'))
+    Column("nutrition_plan_id", Integer, ForeignKey("nutrition_plans.id")),
+    Column("athlete_id", Integer, ForeignKey("athletes.id")),
 )
 
 
@@ -40,4 +44,6 @@ class NutritionPlan(Base):
     dinner = Column(Text, nullable=False)
     description = Column(Text, default="")
 
-    athletes = relationship("Athlete", secondary=nutrition_athletes, back_populates="nutrition_plans")
+    athletes = relationship(
+        "Athlete", secondary=nutrition_athletes, back_populates="nutrition_plans"
+    )

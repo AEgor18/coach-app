@@ -1,4 +1,5 @@
 from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -25,8 +26,7 @@ router = APIRouter(prefix="/api/trainings", tags=["Trainings"])
 
 @router.get("/plans", response_model=List[TrainingPlanResponse])
 async def read_training_plans(
-    db: Session = Depends(get_db),
-    coach: CoachProfile = Depends(get_current_coach)
+    db: Session = Depends(get_db), coach: CoachProfile = Depends(get_current_coach)
 ):
     """Получить все планы тренировок"""
     plans = get_training_plans(db)
@@ -39,7 +39,7 @@ async def read_training_plans(
 async def create_new_training_plan(
     plan: TrainingPlanCreate,
     db: Session = Depends(get_db),
-    coach: CoachProfile = Depends(get_current_coach)
+    coach: CoachProfile = Depends(get_current_coach),
 ):
     """Создать новый план тренировки"""
     return create_training_plan(db=db, plan=plan)
@@ -49,7 +49,7 @@ async def create_new_training_plan(
 async def read_training_plan(
     plan_id: int,
     db: Session = Depends(get_db),
-    coach: CoachProfile = Depends(get_current_coach)
+    coach: CoachProfile = Depends(get_current_coach),
 ):
     """Получить план тренировки по ID"""
     db_plan = get_training_plan(db, plan_id=plan_id)
@@ -65,7 +65,7 @@ async def update_training_plan_data(
     plan_id: int,
     plan_update: TrainingPlanUpdate,
     db: Session = Depends(get_db),
-    coach: CoachProfile = Depends(get_current_coach)
+    coach: CoachProfile = Depends(get_current_coach),
 ):
     """Обновить данные плана тренировки"""
     db_plan = update_training_plan(db, plan_id=plan_id, plan_update=plan_update)
@@ -81,7 +81,7 @@ async def update_training_status_endpoint(
     plan_id: int,
     new_status: TrainingStatus,
     db: Session = Depends(get_db),
-    coach: CoachProfile = Depends(get_current_coach)
+    coach: CoachProfile = Depends(get_current_coach),
 ):
     """Обновить статус тренировки"""
     db_plan = update_training_status(db, plan_id=plan_id, status=new_status)
@@ -96,7 +96,7 @@ async def update_training_status_endpoint(
 async def delete_training_plan_endpoint(
     plan_id: int,
     db: Session = Depends(get_db),
-    coach: CoachProfile = Depends(get_current_coach)
+    coach: CoachProfile = Depends(get_current_coach),
 ):
     """Удалить план тренировки"""
     success = delete_training_plan(db, plan_id=plan_id)

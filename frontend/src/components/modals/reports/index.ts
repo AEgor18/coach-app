@@ -1,2 +1,2 @@
-export * from './AddReportModal';
-export * from './EditReportModal';
+export * from "./AddReportModal";
+export * from "./EditReportModal";

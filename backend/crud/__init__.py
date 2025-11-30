@@ -4,7 +4,7 @@ from .athletes import (
     get_athlete,
     get_athletes,
     update_athlete,
-    update_athlete_status
+    update_athlete_status,
 )
 from .nutrition import (
     create_nutrition_plan,
@@ -42,8 +42,7 @@ __all__ = [
     "create_athlete",
     "update_athlete",
     "delete_athlete",
-    "update_athlete_status"
-    "get_training_plans",
+    "update_athlete_status" "get_training_plans",
     "get_training_plan",
     "create_training_plan",
     "update_training_plan",

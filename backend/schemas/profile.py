@@ -1,5 +1,6 @@
 import re
 from typing import Optional
+
 from pydantic import BaseModel, EmailStr, Field, validator
 
 
@@ -23,7 +24,9 @@ class CoachProfileBase(BaseModel):
 
 
 class CoachProfileCreate(CoachProfileBase):
-    password: str = Field(..., min_length=8, max_length=72, description="Пароль (8-72 символа)")
+    password: str = Field(
+        ..., min_length=8, max_length=72, description="Пароль (8-72 символа)"
+    )
 
 
 class CoachProfileUpdate(BaseModel):

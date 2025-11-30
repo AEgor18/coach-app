@@ -1,7 +1,10 @@
 import re
 from typing import Optional
+
 from pydantic import BaseModel, Field, validator
+
 from models.athletes import AthleteStatus, SportType
+
 
 class AthleteBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100, description="Имя спортсмена")
@@ -23,8 +26,10 @@ class AthleteBase(BaseModel):
             raise ValueError("Имя не может быть пустым")
         return v.strip()
 
+
 class AthleteCreate(AthleteBase):
     pass
+
 
 class AthleteUpdate(BaseModel):
     name: Optional[str] = Field(
@@ -56,8 +61,10 @@ class AthleteUpdate(BaseModel):
             raise ValueError("Имя не может быть пустым")
         return v.strip() if v else v
 
+
 class AthleteStatusUpdate(BaseModel):
     status: AthleteStatus
+
 
 class AthleteResponse(AthleteBase):
     id: int
@@ -65,6 +72,7 @@ class AthleteResponse(AthleteBase):
 
     class Config:
         from_attributes = True
+
 
 class AthleteSimpleResponse(BaseModel):
     id: int

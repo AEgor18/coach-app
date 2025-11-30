@@ -1,8 +1,10 @@
-from sqlalchemy.orm import Session
-from models.trainings import TrainingPlan, TrainingStatus
-from models.athletes import Athlete
-from schemas.trainings import TrainingPlanCreate, TrainingPlanUpdate
 from typing import List, Optional
+
+from sqlalchemy.orm import Session
+
+from models.athletes import Athlete
+from models.trainings import TrainingPlan, TrainingStatus
+from schemas.trainings import TrainingPlanCreate, TrainingPlanUpdate
 
 
 def get_training_plans(db: Session) -> List[TrainingPlan]:
@@ -26,7 +28,7 @@ def create_training_plan(db: Session, plan: TrainingPlanCreate) -> TrainingPlan:
         duration=plan.duration,
         skill_level=plan.skill_level,
         description=plan.description or "",
-        athletes=athletes
+        athletes=athletes,
     )
     db.add(db_plan)
     db.commit()
@@ -34,7 +36,9 @@ def create_training_plan(db: Session, plan: TrainingPlanCreate) -> TrainingPlan:
     return db_plan
 
 
-def update_training_plan(db: Session, plan_id: int, plan_update: TrainingPlanUpdate) -> Optional[TrainingPlan]:
+def update_training_plan(
+    db: Session, plan_id: int, plan_update: TrainingPlanUpdate
+) -> Optional[TrainingPlan]:
     """Обновить план тренировки"""
     db_plan = db.query(TrainingPlan).filter(TrainingPlan.id == plan_id).first()
     if not db_plan:
@@ -42,7 +46,7 @@ def update_training_plan(db: Session, plan_id: int, plan_update: TrainingPlanUpd
 
     update_data = plan_update.dict(exclude_unset=True)
 
-    athlete_ids = update_data.pop('athlete_ids', None)
+    athlete_ids = update_data.pop("athlete_ids", None)
     if athlete_ids is not None:
         athletes = db.query(Athlete).filter(Athlete.id.in_(athlete_ids)).all()
         db_plan.athletes = athletes
@@ -67,7 +71,9 @@ def delete_training_plan(db: Session, plan_id: int) -> bool:
     return True
 
 
-def update_training_status(db: Session, plan_id: int, status: TrainingStatus) -> Optional[TrainingPlan]:
+def update_training_status(
+    db: Session, plan_id: int, status: TrainingStatus
+) -> Optional[TrainingPlan]:
     """Обновить статус тренировки"""
     db_plan = db.query(TrainingPlan).filter(TrainingPlan.id == plan_id).first()
     if not db_plan:

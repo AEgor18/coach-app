@@ -1,2 +1,2 @@
-export * from './AddAthleteModal';
-export * from './EditAthleteModal';
+export * from "./AddAthleteModal";
+export * from "./EditAthleteModal";

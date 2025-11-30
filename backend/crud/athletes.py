@@ -1,13 +1,18 @@
 from typing import List, Optional
+
 from sqlalchemy.orm import Session
+
 from models.athletes import Athlete, AthleteStatus
 from schemas.athletes import AthleteCreate, AthleteUpdate
+
 
 def get_athletes(db: Session) -> List[Athlete]:
     return db.query(Athlete).all()
 
+
 def get_athlete(db: Session, athlete_id: int) -> Optional[Athlete]:
     return db.query(Athlete).filter(Athlete.id == athlete_id).first()
+
 
 def create_athlete(db: Session, athlete: AthleteCreate) -> Athlete:
     db_athlete = Athlete(
@@ -21,6 +26,7 @@ def create_athlete(db: Session, athlete: AthleteCreate) -> Athlete:
     db.commit()
     db.refresh(db_athlete)
     return db_athlete
+
 
 def update_athlete(
     db: Session, athlete_id: int, athlete_update: AthleteUpdate
@@ -37,6 +43,7 @@ def update_athlete(
     db.refresh(db_athlete)
     return db_athlete
 
+
 def update_athlete_status(
     db: Session, athlete_id: int, status: AthleteStatus
 ) -> Optional[Athlete]:
@@ -49,6 +56,7 @@ def update_athlete_status(
     db.commit()
     db.refresh(db_athlete)
     return db_athlete
+
 
 def delete_athlete(db: Session, athlete_id: int) -> bool:
     db_athlete = db.query(Athlete).filter(Athlete.id == athlete_id).first()

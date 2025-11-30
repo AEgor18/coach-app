@@ -1,7 +1,9 @@
 from datetime import datetime, timedelta
 from typing import Optional
-from jose import jwt, JWTError
+
+from jose import JWTError, jwt
 from passlib.context import CryptContext
+
 from core.config import settings
 
 pwd_context = CryptContext(schemes=["argon2", "bcrypt"], deprecated="auto")
@@ -15,10 +17,7 @@ def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
-def create_access_token(
-    data: dict,
-    expires_delta: Optional[timedelta] = None
-):
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
 
     expire = datetime.utcnow() + (

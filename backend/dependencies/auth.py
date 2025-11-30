@@ -1,6 +1,7 @@
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
+
 from core.security import verify_token
 from crud.profile import get_coach_by_email
 from database import get_db
@@ -9,8 +10,8 @@ security = HTTPBearer()
 
 
 async def get_current_coach(
-        credentials: HTTPAuthorizationCredentials = Depends(security),
-        db: Session = Depends(get_db)
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db),
 ):
     token = credentials.credentials
     payload = verify_token(token)

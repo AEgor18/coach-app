@@ -3,7 +3,7 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 from models.nutrition import NutritionStatus, NutritionType
-from schemas.athletes import AthleteSimpleResponse 
+from schemas.athletes import AthleteSimpleResponse
 
 
 class NutritionPlanBase(BaseModel):
@@ -46,9 +46,7 @@ class NutritionPlanUpdate(BaseModel):
 class NutritionPlanResponse(NutritionPlanBase):
     id: int
     status: NutritionStatus
-    athletes: List[AthleteSimpleResponse] = Field(
-        description="Список спортсменов"
-    )
+    athletes: List[AthleteSimpleResponse] = Field(description="Список спортсменов")
 
     class Config:
         from_attributes = True

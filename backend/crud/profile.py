@@ -1,8 +1,10 @@
+from typing import Optional
+
 from sqlalchemy.orm import Session
+
+from core.security import get_password_hash, verify_password
 from models.profile import CoachProfile
 from schemas.profile import CoachProfileCreate, CoachProfileUpdate
-from core.security import get_password_hash, verify_password
-from typing import Optional
 
 
 def get_coach_by_email(db: Session, email: str) -> Optional[CoachProfile]:
@@ -33,7 +35,9 @@ def create_coach_profile(db: Session, profile: CoachProfileCreate) -> CoachProfi
     return db_profile
 
 
-def authenticate_coach(db: Session, email: str, password: str) -> Optional[CoachProfile]:
+def authenticate_coach(
+    db: Session, email: str, password: str
+) -> Optional[CoachProfile]:
     coach = get_coach_by_email(db, email)
     if not coach:
         return None
@@ -45,7 +49,9 @@ def authenticate_coach(db: Session, email: str, password: str) -> Optional[Coach
     return coach
 
 
-def update_coach_profile(db: Session, profile_update: CoachProfileUpdate) -> Optional[CoachProfile]:
+def update_coach_profile(
+    db: Session, profile_update: CoachProfileUpdate
+) -> Optional[CoachProfile]:
     db_profile = db.query(CoachProfile).first()
     if not db_profile:
         return None

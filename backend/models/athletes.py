@@ -1,6 +1,10 @@
 from enum import Enum
-from sqlalchemy import Column, Integer, String, Enum as SQLEnum
+
+from sqlalchemy import Column
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import Integer, String
 from sqlalchemy.orm import relationship
+
 from database import Base
 
 
@@ -27,5 +31,9 @@ class Athlete(Base):
     phone = Column(String(20), nullable=False)
     progress = Column(Integer, default=0)
 
-    training_plans = relationship("TrainingPlan", secondary="training_athletes", back_populates="athletes")
-    nutrition_plans = relationship("NutritionPlan", secondary="nutrition_athletes", back_populates="athletes")
+    training_plans = relationship(
+        "TrainingPlan", secondary="training_athletes", back_populates="athletes"
+    )
+    nutrition_plans = relationship(
+        "NutritionPlan", secondary="nutrition_athletes", back_populates="athletes"
+    )

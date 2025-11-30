@@ -1,16 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from routers import athletes, trainings, nutrition, reports, profile
-from database import engine, Base
+from database import Base, engine
 from middleware.auth import AuthMiddleware
+from routers import athletes, nutrition, profile, reports, trainings
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
-    title="Fitness Coach App",
-    description="API для приложения тренера",
-    version="1.0.0"
+    title="Fitness Coach App", description="API для приложения тренера", version="1.0.0"
 )
 
 origins = [
@@ -36,9 +34,11 @@ app.include_router(nutrition.router)
 app.include_router(reports.router)
 app.include_router(profile.router)
 
+
 @app.get("/")
 async def root():
     return {"message": "Fitness Coach App API"}
+
 
 @app.get("/health")
 async def health_check():

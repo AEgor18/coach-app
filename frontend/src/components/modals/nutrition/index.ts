@@ -1,2 +1,2 @@
-export * from './AddNutritionModal';
-export * from './EditNutritionModal';
+export * from "./AddNutritionModal";
+export * from "./EditNutritionModal";

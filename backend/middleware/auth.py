@@ -1,8 +1,10 @@
 from fastapi import Request
 from fastapi.responses import JSONResponse
+from jose import JWTError, jwt
 from starlette.middleware.base import BaseHTTPMiddleware
-from jose import jwt, JWTError
+
 from core.config import settings
+
 
 class AuthMiddleware(BaseHTTPMiddleware):
 
@@ -21,7 +23,9 @@ class AuthMiddleware(BaseHTTPMiddleware):
             "/openapi.json",
         }
 
-        if request.url.path.startswith("/docs") or request.url.path.startswith("/redoc"):
+        if request.url.path.startswith("/docs") or request.url.path.startswith(
+            "/redoc"
+        ):
             return await call_next(request)
 
         if request.url.path in public_paths:
@@ -35,7 +39,9 @@ class AuthMiddleware(BaseHTTPMiddleware):
         token = token_header.split(" ")[1]
 
         try:
-            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+            payload = jwt.decode(
+                token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+            )
         except JWTError:
             return JSONResponse(status_code=401, content={"detail": "Invalid token"})
 

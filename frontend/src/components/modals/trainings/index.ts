@@ -1,2 +1,2 @@
-export * from './AddTrainingModal';
-export * from './EditTrainingModal';
+export * from "./AddTrainingModal";
+export * from "./EditTrainingModal";

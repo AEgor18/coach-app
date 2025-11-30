@@ -1,4 +1,5 @@
 from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -12,8 +13,8 @@ from crud.nutrition import (
 )
 from database import get_db
 from dependencies.auth import get_current_coach
-from models.profile import CoachProfile
 from models.nutrition import NutritionStatus
+from models.profile import CoachProfile
 from schemas.nutrition import (
     NutritionPlanCreate,
     NutritionPlanResponse,
@@ -25,8 +26,7 @@ router = APIRouter(prefix="/api/nutrition", tags=["Nutrition"])
 
 @router.get("/plans", response_model=List[NutritionPlanResponse])
 async def read_nutrition_plans(
-    db: Session = Depends(get_db),
-    coach: CoachProfile = Depends(get_current_coach)
+    db: Session = Depends(get_db), coach: CoachProfile = Depends(get_current_coach)
 ):
     """Получить все планы питания"""
     plans = get_nutrition_plans(db)
@@ -39,7 +39,7 @@ async def read_nutrition_plans(
 async def create_new_nutrition_plan(
     plan: NutritionPlanCreate,
     db: Session = Depends(get_db),
-    coach: CoachProfile = Depends(get_current_coach)
+    coach: CoachProfile = Depends(get_current_coach),
 ):
     """Создать новый план питания"""
     return create_nutrition_plan(db=db, plan=plan)
@@ -49,7 +49,7 @@ async def create_new_nutrition_plan(
 async def read_nutrition_plan(
     plan_id: int,
     db: Session = Depends(get_db),
-    coach: CoachProfile = Depends(get_current_coach)
+    coach: CoachProfile = Depends(get_current_coach),
 ):
     """Получить план питания по ID"""
     db_plan = get_nutrition_plan(db, plan_id=plan_id)
@@ -65,7 +65,7 @@ async def update_nutrition_plan_data(
     plan_id: int,
     plan_update: NutritionPlanUpdate,
     db: Session = Depends(get_db),
-    coach: CoachProfile = Depends(get_current_coach)
+    coach: CoachProfile = Depends(get_current_coach),
 ):
     """Обновить данные плана питания"""
     db_plan = update_nutrition_plan(db, plan_id=plan_id, plan_update=plan_update)
@@ -81,7 +81,7 @@ async def update_nutrition_status_endpoint(
     plan_id: int,
     new_status: NutritionStatus,
     db: Session = Depends(get_db),
-    coach: CoachProfile = Depends(get_current_coach)
+    coach: CoachProfile = Depends(get_current_coach),
 ):
     """Обновить статус плана питания"""
     db_plan = update_nutrition_status(db, plan_id=plan_id, status=new_status)
@@ -96,7 +96,7 @@ async def update_nutrition_status_endpoint(
 async def delete_nutrition_plan_endpoint(
     plan_id: int,
     db: Session = Depends(get_db),
-    coach: CoachProfile = Depends(get_current_coach)
+    coach: CoachProfile = Depends(get_current_coach),
 ):
     """Удалить план питания"""
     success = delete_nutrition_plan(db, plan_id=plan_id)
