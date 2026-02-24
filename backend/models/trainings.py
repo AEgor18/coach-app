@@ -47,6 +47,9 @@ class TrainingPlan(Base):
     skill_level = Column(SQLEnum(SkillLevel), nullable=False)
     description = Column(Text, default="")
 
+    coach_id = Column(Integer, ForeignKey("coach_profile.id"), nullable=False)
+    coach = relationship("CoachProfile", backref="training_plans")
+
     athletes = relationship(
         "Athlete", secondary=training_athletes, back_populates="training_plans"
     )

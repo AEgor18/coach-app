@@ -44,6 +44,9 @@ class NutritionPlan(Base):
     dinner = Column(Text, nullable=False)
     description = Column(Text, default="")
 
+    coach_id = Column(Integer, ForeignKey("coach_profile.id"), nullable=False)
+    coach = relationship("CoachProfile", backref="nutrition_plans")
+
     athletes = relationship(
         "Athlete", secondary=nutrition_athletes, back_populates="nutrition_plans"
     )

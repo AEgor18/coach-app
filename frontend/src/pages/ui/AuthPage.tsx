@@ -1,372 +1,453 @@
 import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Button,
-  TextField,
-  Tabs,
-  Tab,
-  Grid,
-} from "@mui/material";
-import { useEffect, useState } from "react";
-import { loginUser, registerUser } from "../../api/profile";
-import { Header } from "../../components/ui/Header";
-import { useNavigate } from "react-router-dom";
+	Box,
+	Typography,
+	Card,
+	CardContent,
+	Button,
+	TextField,
+	Tabs,
+	Tab,
+	Grid,
+	Snackbar,
+	Alert,
+} from '@mui/material';
+import { useEffect, useState } from 'react';
+import { loginUser, registerUser } from '../../api/profile';
+import { Header } from '../../components/ui/Header';
+import { useNavigate } from 'react-router-dom';
 
 export const AuthPage = () => {
-  const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState(0);
-  const [loginData, setLoginData] = useState({
-    email: "",
-    password: "",
-  });
-  const [registerData, setRegisterData] = useState({
-    fullName: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    phone: "",
-  });
+	const navigate = useNavigate();
+	const [activeTab, setActiveTab] = useState(0);
 
-  useEffect(() => {
-    if (localStorage.getItem("access_token")) {
-      navigate("/");
-    }
-  }, []);
+	const [loginData, setLoginData] = useState({ email: '', password: '' });
+	const [registerData, setRegisterData] = useState({
+		fullName: '',
+		email: '',
+		password: '',
+		confirmPassword: '',
+		phone: '',
+	});
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue);
-  };
+	const [errors, setErrors] = useState<Record<string, string>>({});
+	const [snackbar, setSnackbar] = useState({
+		open: false,
+		message: '',
+		severity: 'success' as 'success' | 'error',
+	});
 
-  const handleLoginChange =
-    (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
-      const value =
-        field === "remember" ? event.target.checked : event.target.value;
-      setLoginData((prev) => ({
-        ...prev,
-        [field]: value,
-      }));
-    };
+	useEffect(() => {
+		if (localStorage.getItem('access_token')) navigate('/');
+	}, []);
 
-  const handleRegisterChange =
-    (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
-      setRegisterData((prev) => ({
-        ...prev,
-        [field]: event.target.value,
-      }));
-    };
+	const handleTabChange = (_: any, newValue: number) => {
+		setActiveTab(newValue);
+		setErrors({});
+	};
 
-  const handleLoginSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
+	const handleLoginChange =
+		(field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
+			const value = event.target.value;
+			setLoginData((prev) => ({ ...prev, [field]: value }));
 
-    const res = await loginUser(loginData);
-    if (res) {
-      localStorage.setItem("access_token", res.access_token);
-    }
+			// Live validation
+			if (field === 'email') {
+				if (!value)
+					setErrors((prev) => ({ ...prev, email: 'Введите email' }));
+				else if (!validateEmail(value))
+					setErrors((prev) => ({
+						...prev,
+						email: 'Введите корректный email',
+					}));
+				else setErrors((prev) => ({ ...prev, email: '' }));
+			}
+			if (field === 'password') {
+				if (!value)
+					setErrors((prev) => ({
+						...prev,
+						password: 'Введите пароль',
+					}));
+				else if (value.length < 8)
+					setErrors((prev) => ({
+						...prev,
+						password: 'Минимум 8 символов',
+					}));
+				else setErrors((prev) => ({ ...prev, password: '' }));
+			}
+		};
 
-    navigate("/");
-  };
+	const handleRegisterChange =
+		(field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
+			const value = event.target.value;
+			setRegisterData((prev) => ({ ...prev, [field]: value }));
 
-  const handleRegisterSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
+			setErrors((prev) => {
+				const newErrors = { ...prev };
 
-    if (registerData.confirmPassword != registerData.password) {
-      alert("Пароли не совпадают");
-      return;
-    }
-    const data = {
-      full_name: registerData.fullName,
-      phone: registerData.phone,
-      email: registerData.email,
-      password: registerData.password,
-    };
+				if (field === 'fullName')
+					newErrors.fullName = value ? '' : 'Введите ФИО';
+				if (field === 'email') {
+					if (!value) newErrors.email = 'Введите email';
+					else if (!validateEmail(value))
+						newErrors.email = 'Введите корректный email';
+					else newErrors.email = '';
+				}
+				if (field === 'password') {
+					if (!value) newErrors.password = 'Введите пароль';
+					else if (value.length < 8)
+						newErrors.password = 'Минимум 8 символов';
+					else newErrors.password = '';
 
-    await registerUser(data);
-    setActiveTab(0);
-  };
+					if (
+						registerData.confirmPassword &&
+						value !== registerData.confirmPassword
+					)
+						newErrors.confirmPassword = 'Пароли не совпадают';
+					else if (registerData.confirmPassword)
+						newErrors.confirmPassword = '';
+				}
+				if (field === 'confirmPassword') {
+					if (!value) newErrors.confirmPassword = 'Повторите пароль';
+					else if (value !== registerData.password)
+						newErrors.confirmPassword = 'Пароли не совпадают';
+					else newErrors.confirmPassword = '';
+				}
+				if (field === 'phone') {
+					if (!value) newErrors.phone = 'Введите телефон';
+					else if (!validatePhone(value))
+						newErrors.phone = 'Введите корректный телефон';
+					else newErrors.phone = '';
+				}
+				return newErrors;
+			});
+		};
 
-  return (
-    <Box>
-      <Header />
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          p: 3,
-          mt: 20,
-        }}
-      >
-        <Card
-          sx={{
-            width: "100%",
-            maxWidth: 450,
-            borderRadius: "12px",
-            boxShadow: "0 10px 25px -3px rgba(0, 0, 0, 0.1)",
-            overflow: "hidden",
-          }}
-        >
-          <Box
-            sx={{
-              backgroundColor: "#377CD6",
-              color: "white",
-              padding: "30px",
-              textAlign: "center",
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: "28px",
-                fontWeight: "bold",
-                mb: 1,
-              }}
-            >
-              Тренерский Центр
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: "16px",
-                opacity: 0.9,
-              }}
-            >
-              Профессиональная платформа для тренеров
-            </Typography>
-          </Box>
+	const validateEmail = (email: string) =>
+		/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-          <Tabs
-            value={activeTab}
-            onChange={handleTabChange}
-            variant="fullWidth"
-            sx={{
-              borderBottom: "1px solid #E2E8F0",
-              "& .MuiTab-root": {
-                padding: "18px",
-                fontSize: "16px",
-                fontWeight: 600,
-                color: "#4A5568",
-                textTransform: "none",
-              },
-              "& .Mui-selected": {
-                color: "#377CD6",
-              },
-              "& .MuiTabs-indicator": {
-                backgroundColor: "#377CD6",
-                height: "3px",
-              },
-            }}
-          >
-            <Tab label="Вход" />
-            <Tab label="Регистрация" />
-          </Tabs>
+	const validatePhone = (phone: string) =>
+		/^\+?\d{1,3}?[-.\s]?\(?\d{1,4}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,9}$/.test(
+			phone,
+		);
 
-          <CardContent sx={{ p: 3 }}>
-            {activeTab === 0 && (
-              <Box
-                component="form"
-                onSubmit={handleLoginSubmit}
-                sx={{
-                  animation: "fadeIn 0.5s ease",
-                  "@keyframes fadeIn": {
-                    from: {
-                      opacity: 0,
-                      transform: "translateY(10px)",
-                    },
-                    to: {
-                      opacity: 1,
-                      transform: "translateY(0)",
-                    },
-                  },
-                }}
-              >
-                <TextField
-                  fullWidth
-                  label="Email"
-                  type="email"
-                  value={loginData.email}
-                  onChange={handleLoginChange("email")}
-                  placeholder="example@mail.ru"
-                  required
-                  sx={{ mb: 2.5 }}
-                />
+	const handleLoginSubmit = async (event: React.FormEvent) => {
+		event.preventDefault();
 
-                <TextField
-                  fullWidth
-                  label="Пароль"
-                  type="password"
-                  value={loginData.password}
-                  onChange={handleLoginChange("password")}
-                  placeholder="Введите пароль"
-                  required
-                  sx={{ mb: 2 }}
-                />
+		if (!loginData.email || !validateEmail(loginData.email)) {
+			setErrors((prev) => ({
+				...prev,
+				email: 'Введите корректный email',
+			}));
+			return;
+		}
+		if (!loginData.password || loginData.password.length < 8) {
+			setErrors((prev) => ({
+				...prev,
+				password: 'Введите корректный пароль',
+			}));
+			return;
+		}
 
-                {/* <FormControlLabel
-								control={
-									<Checkbox
-										checked={loginData.remember}
-										onChange={handleLoginChange('remember')}
-										sx={{
-											color: '#377CD6',
-											'&.Mui-checked': {
-												color: '#377CD6',
-											},
-										}}
-									/>
-								}
-								label='Запомнить меня'
-								sx={{ mb: 2 }}
-							/> */}
+		try {
+			const res = await loginUser(loginData);
+			if (res) {
+				localStorage.setItem('access_token', res.access_token);
+				setSnackbar({
+					open: true,
+					message: 'Успешный вход!',
+					severity: 'success',
+				});
+				navigate('/');
+			}
+		} catch (err: any) {
+			setSnackbar({
+				open: true,
+				message:
+					err.response?.data?.detail || 'Неверный email или пароль',
+				severity: 'error',
+			});
+		}
+	};
 
-                <Button
-                  type="submit"
-                  fullWidth
-                  variant="contained"
-                  sx={{
-                    backgroundColor: "#377CD6",
-                    padding: "14px 20px",
-                    fontSize: "16px",
-                    fontWeight: 600,
-                    borderRadius: "8px",
-                    mb: 2,
-                    "&:hover": {
-                      backgroundColor: "#2B6CB0",
-                      transform: "translateY(-1px)",
-                      boxShadow: "0 6px 12px rgba(55, 124, 214, 0.3)",
-                    },
-                    transition: "all 0.3s ease",
-                  }}
-                >
-                  Войти
-                </Button>
+	const handleRegisterSubmit = async (event: React.FormEvent) => {
+		event.preventDefault();
 
-                <Box
-                  sx={{
-                    textAlign: "center",
-                    paddingTop: "20px",
-                    borderTop: "1px solid #E2E8F0",
-                    color: "#4A5568",
-                    fontSize: "14px",
-                  }}
-                >
-                  {/* <Button
+		const newErrors: Record<string, string> = {};
+		if (!registerData.fullName) newErrors.fullName = 'Введите ФИО';
+		if (!registerData.email || !validateEmail(registerData.email))
+			newErrors.email = 'Введите корректный email';
+		if (!registerData.password || registerData.password.length < 8)
+			newErrors.password = 'Минимум 8 символов';
+		if (registerData.password !== registerData.confirmPassword)
+			newErrors.confirmPassword = 'Пароли не совпадают';
+		if (!registerData.phone || !validatePhone(registerData.phone))
+			newErrors.phone = 'Введите корректный телефон';
+
+		setErrors(newErrors);
+		if (Object.keys(newErrors).some((key) => newErrors[key])) return;
+
+		try {
+			const data = {
+				full_name: registerData.fullName,
+				email: registerData.email,
+				phone: registerData.phone,
+				password: registerData.password,
+			};
+			await registerUser(data);
+			setSnackbar({
+				open: true,
+				message: 'Регистрация прошла успешно!',
+				severity: 'success',
+			});
+			setActiveTab(0);
+		} catch (err: any) {
+			setSnackbar({
+				open: true,
+				message: err.response?.data?.detail || 'Ошибка регистрации',
+				severity: 'error',
+			});
+		}
+	};
+
+	const handleCloseSnackbar = () =>
+		setSnackbar((prev) => ({ ...prev, open: false }));
+
+	return (
+		<Box>
+			<Header />
+			<Snackbar
+				open={snackbar.open}
+				autoHideDuration={4000}
+				onClose={handleCloseSnackbar}
+				anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+			>
+				<Alert
+					onClose={handleCloseSnackbar}
+					severity={snackbar.severity}
+					sx={{ width: '100%' }}
+				>
+					{snackbar.message}
+				</Alert>
+			</Snackbar>
+
+			<Box
+				sx={{
+					display: 'flex',
+					justifyContent: 'center',
+					alignItems: 'center',
+					p: 3,
+					mt: 20,
+				}}
+			>
+				<Card
+					sx={{
+						width: '100%',
+						maxWidth: 450,
+						borderRadius: '12px',
+						boxShadow: '0 10px 25px -3px rgba(0, 0, 0, 0.1)',
+						overflow: 'hidden',
+					}}
+				>
+					<Box
+						sx={{
+							backgroundColor: '#377CD6',
+							color: 'white',
+							padding: '30px',
+							textAlign: 'center',
+						}}
+					>
+						<Typography
+							sx={{ fontSize: '28px', fontWeight: 'bold', mb: 1 }}
+						>
+							Тренерский Центр
+						</Typography>
+						<Typography sx={{ fontSize: '16px', opacity: 0.9 }}>
+							Профессиональная платформа для тренеров
+						</Typography>
+					</Box>
+
+					<Tabs
+						value={activeTab}
+						onChange={handleTabChange}
+						variant='fullWidth'
+						sx={{
+							borderBottom: '1px solid #E2E8F0',
+							'& .MuiTab-root': {
+								padding: '18px',
+								fontSize: '16px',
+								fontWeight: 600,
+								color: '#4A5568',
+								textTransform: 'none',
+							},
+							'& .Mui-selected': { color: '#377CD6' },
+							'& .MuiTabs-indicator': {
+								backgroundColor: '#377CD6',
+								height: '3px',
+							},
+						}}
+					>
+						<Tab label='Вход' />
+						<Tab label='Регистрация' />
+					</Tabs>
+
+					<CardContent sx={{ p: 3 }}>
+						{/* Вход */}
+						{activeTab === 0 && (
+							<Box component='form' onSubmit={handleLoginSubmit}>
+								<TextField
+									fullWidth
+									label='Email'
+									type='email'
+									value={loginData.email}
+									onChange={handleLoginChange('email')}
+									placeholder='example@mail.ru'
+									required
+									error={!!errors.email}
+									helperText={errors.email}
+									sx={{ mb: 2.5 }}
+								/>
+
+								<TextField
+									fullWidth
+									label='Пароль'
+									type='password'
+									value={loginData.password}
+									onChange={handleLoginChange('password')}
+									placeholder='Введите пароль'
+									required
+									error={!!errors.password}
+									helperText={errors.password}
+									sx={{ mb: 2 }}
+								/>
+
+								<Button
+									type='submit'
+									fullWidth
+									variant='contained'
 									sx={{
-										color: '#377CD6',
+										backgroundColor: '#377CD6',
+										padding: '14px 20px',
+										fontSize: '16px',
 										fontWeight: 600,
-										textTransform: 'none',
-										fontSize: '14px',
+										borderRadius: '8px',
+										mb: 2,
 										'&:hover': {
-											textDecoration: 'underline',
-											backgroundColor: 'transparent',
+											backgroundColor: '#2B6CB0',
+											transform: 'translateY(-1px)',
+											boxShadow:
+												'0 6px 12px rgba(55, 124, 214, 0.3)',
 										},
+										transition: 'all 0.3s ease',
 									}}
 								>
-									Забыли пароль?
-								</Button> */}
-                </Box>
-              </Box>
-            )}
+									Войти
+								</Button>
+							</Box>
+						)}
 
-            {activeTab === 1 && (
-              <Box
-                component="form"
-                onSubmit={handleRegisterSubmit}
-                sx={{
-                  animation: "fadeIn 0.5s ease",
-                  "@keyframes fadeIn": {
-                    from: {
-                      opacity: 0,
-                      transform: "translateY(10px)",
-                    },
-                    to: {
-                      opacity: 1,
-                      transform: "translateY(0)",
-                    },
-                  },
-                }}
-              >
-                <TextField
-                  fullWidth
-                  label="ФИО"
-                  value={registerData.fullName}
-                  onChange={handleRegisterChange("fullName")}
-                  placeholder="Иванов Алексей Сергеевич"
-                  required
-                  sx={{ mb: 2 }}
-                />
+						{/* Регистрация */}
+						{activeTab === 1 && (
+							<Box
+								component='form'
+								onSubmit={handleRegisterSubmit}
+							>
+								<TextField
+									fullWidth
+									label='ФИО'
+									value={registerData.fullName}
+									onChange={handleRegisterChange('fullName')}
+									placeholder='Иванов Алексей Сергеевич'
+									required
+									error={!!errors.fullName}
+									helperText={errors.fullName}
+									sx={{ mb: 2 }}
+								/>
 
-                <TextField
-                  fullWidth
-                  label="Email"
-                  type="email"
-                  value={registerData.email}
-                  onChange={handleRegisterChange("email")}
-                  placeholder="example@mail.ru"
-                  required
-                  sx={{ mb: 2 }}
-                />
+								<TextField
+									fullWidth
+									label='Email'
+									type='email'
+									value={registerData.email}
+									onChange={handleRegisterChange('email')}
+									placeholder='example@mail.ru'
+									required
+									error={!!errors.email}
+									helperText={errors.email}
+									sx={{ mb: 2 }}
+								/>
 
-                <Grid container spacing={2} sx={{ mb: 2 }}>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="Пароль"
-                      type="password"
-                      value={registerData.password}
-                      onChange={handleRegisterChange("password")}
-                      placeholder="Придумайте пароль"
-                      required
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="Подтверждение"
-                      type="password"
-                      value={registerData.confirmPassword}
-                      onChange={handleRegisterChange("confirmPassword")}
-                      placeholder="Повторите пароль"
-                      required
-                    />
-                  </Grid>
-                </Grid>
+								<Grid container spacing={2} sx={{ mb: 2 }}>
+									<Grid item xs={12} sm={6}>
+										<TextField
+											fullWidth
+											label='Пароль'
+											type='password'
+											value={registerData.password}
+											onChange={handleRegisterChange(
+												'password',
+											)}
+											placeholder='Придумайте пароль'
+											required
+											error={!!errors.password}
+											helperText={errors.password}
+										/>
+									</Grid>
+									<Grid item xs={12} sm={6}>
+										<TextField
+											fullWidth
+											label='Подтверждение'
+											type='password'
+											value={registerData.confirmPassword}
+											onChange={handleRegisterChange(
+												'confirmPassword',
+											)}
+											placeholder='Повторите пароль'
+											required
+											error={!!errors.confirmPassword}
+											helperText={errors.confirmPassword}
+										/>
+									</Grid>
+								</Grid>
 
-                <TextField
-                  fullWidth
-                  label="Телефон"
-                  type="tel"
-                  value={registerData.phone}
-                  onChange={handleRegisterChange("phone")}
-                  placeholder="+7 999 123-45-67"
-                  required
-                  sx={{ mb: 3 }}
-                />
+								<TextField
+									fullWidth
+									label='Телефон'
+									type='tel'
+									value={registerData.phone}
+									onChange={handleRegisterChange('phone')}
+									placeholder='+7 999 123-45-67'
+									required
+									error={!!errors.phone}
+									helperText={errors.phone}
+									sx={{ mb: 3 }}
+								/>
 
-                <Button
-                  type="submit"
-                  fullWidth
-                  variant="contained"
-                  sx={{
-                    backgroundColor: "#377CD6",
-                    padding: "14px 20px",
-                    fontSize: "16px",
-                    fontWeight: 600,
-                    borderRadius: "8px",
-                    "&:hover": {
-                      backgroundColor: "#2B6CB0",
-                      transform: "translateY(-1px)",
-                      boxShadow: "0 6px 12px rgba(55, 124, 214, 0.3)",
-                    },
-                    transition: "all 0.3s ease",
-                  }}
-                >
-                  Зарегистрироваться
-                </Button>
-              </Box>
-            )}
-          </CardContent>
-        </Card>
-      </Box>
-    </Box>
-  );
+								<Button
+									type='submit'
+									fullWidth
+									variant='contained'
+									sx={{
+										backgroundColor: '#377CD6',
+										padding: '14px 20px',
+										fontSize: '16px',
+										fontWeight: 600,
+										borderRadius: '8px',
+										'&:hover': {
+											backgroundColor: '#2B6CB0',
+											transform: 'translateY(-1px)',
+											boxShadow:
+												'0 6px 12px rgba(55, 124, 214, 0.3)',
+										},
+										transition: 'all 0.3s ease',
+									}}
+								>
+									Зарегистрироваться
+								</Button>
+							</Box>
+						)}
+					</CardContent>
+				</Card>
+			</Box>
+		</Box>
+	);
 };

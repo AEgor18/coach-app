@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Date, Integer, String
+from sqlalchemy import Column, Date, Integer, String, ForeignKey
+from sqlalchemy.orm import relationship
 
 from database import Base
 
@@ -15,3 +16,6 @@ class Report(Base):
     trainings = Column(Integer, nullable=False)
     skips = Column(Integer, nullable=False)
     participants = Column(Integer, nullable=False)
+
+    coach_id = Column(Integer, ForeignKey("coach_profile.id"), nullable=False)
+    coach = relationship("CoachProfile", backref="reports")

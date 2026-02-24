@@ -6,9 +6,9 @@ from models.reports import Report
 from schemas.reports import ReportCreate, ReportUpdate
 
 
-def get_reports(db: Session) -> List[Report]:
+def get_reports(db: Session, coach_id: int) -> List[Report]:
     """Получить все отчеты"""
-    return db.query(Report).all()
+    return db.query(Report).filter(Report.coach_id == coach_id).all()
 
 
 def get_report(db: Session, report_id: int) -> Optional[Report]:
@@ -16,7 +16,7 @@ def get_report(db: Session, report_id: int) -> Optional[Report]:
     return db.query(Report).filter(Report.id == report_id).first()
 
 
-def create_report(db: Session, report: ReportCreate) -> Report:
+def create_report(db: Session, report: ReportCreate, coach_id: int) -> Report:
     """Создать новый отчет"""
     db_report = Report(
         title=report.title,
@@ -27,6 +27,7 @@ def create_report(db: Session, report: ReportCreate) -> Report:
         trainings=report.trainings,
         skips=report.skips,
         participants=report.participants,
+        coach_id=coach_id
     )
     db.add(db_report)
     db.commit()

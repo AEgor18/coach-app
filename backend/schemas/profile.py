@@ -2,7 +2,7 @@ import re
 from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field, validator
-
+from models.roles import UserRole
 
 class CoachProfileBase(BaseModel):
     full_name: str = Field(..., min_length=1, max_length=100, description="ФИО тренера")
@@ -39,6 +39,7 @@ class CoachProfileUpdate(BaseModel):
 class CoachProfileResponse(CoachProfileBase):
     id: int
     is_active: bool
+    role: UserRole
 
     class Config:
         from_attributes = True

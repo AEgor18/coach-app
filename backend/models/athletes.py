@@ -1,8 +1,6 @@
 from enum import Enum
 
-from sqlalchemy import Column
-from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import Integer, String
+from sqlalchemy import Column, Enum as SQLEnum, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 
 from database import Base
@@ -30,6 +28,9 @@ class Athlete(Base):
     age = Column(Integer, nullable=False)
     phone = Column(String(20), nullable=False)
     progress = Column(Integer, default=0)
+
+    coach_id = Column(Integer, ForeignKey("coach_profile.id"), nullable=False)
+    coach = relationship("CoachProfile", backref="athletes")
 
     training_plans = relationship(
         "TrainingPlan", secondary="training_athletes", back_populates="athletes"

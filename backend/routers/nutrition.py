@@ -28,8 +28,7 @@ router = APIRouter(prefix="/api/nutrition", tags=["Nutrition"])
 async def read_nutrition_plans(
     db: Session = Depends(get_db), coach: CoachProfile = Depends(get_current_coach)
 ):
-    """Получить все планы питания"""
-    plans = get_nutrition_plans(db)
+    plans = get_nutrition_plans(db, coach_id=coach.id)
     return plans
 
 
@@ -41,8 +40,7 @@ async def create_new_nutrition_plan(
     db: Session = Depends(get_db),
     coach: CoachProfile = Depends(get_current_coach),
 ):
-    """Создать новый план питания"""
-    return create_nutrition_plan(db=db, plan=plan)
+    return create_nutrition_plan(db=db, plan=plan, coach_id=coach.id)
 
 
 @router.get("/plans/{plan_id}", response_model=NutritionPlanResponse)

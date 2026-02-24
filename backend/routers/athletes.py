@@ -29,8 +29,8 @@ router = APIRouter(prefix="/api/athletes", tags=["Athletes"])
 async def read_athletes(
     db: Session = Depends(get_db), coach: CoachProfile = Depends(get_current_coach)
 ):
-    """Получить список всех спортсменов"""
-    athletes = get_athletes(db)
+    """Получить список спортсменов текущего тренера"""
+    athletes = get_athletes(db, coach_id=coach.id)
     return athletes
 
 
@@ -40,8 +40,8 @@ async def create_new_athlete(
     db: Session = Depends(get_db),
     coach: CoachProfile = Depends(get_current_coach),
 ):
-    """Создать нового спортсмена"""
-    return create_athlete(db=db, athlete=athlete)
+    """Создать нового спортсмена для текущего тренера"""
+    return create_athlete(db=db, athlete=athlete, coach_id=coach.id)
 
 
 @router.get("/{athlete_id}", response_model=AthleteResponse)

@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from core.security import get_password_hash, verify_password
 from models.profile import CoachProfile
+from models.roles import UserRole
 from schemas.profile import CoachProfileCreate, CoachProfileUpdate
 
 
@@ -16,19 +17,28 @@ def get_coach_profile(db: Session, email: str) -> Optional[CoachProfile]:
 
 
 def create_coach_profile(db: Session, profile: CoachProfileCreate) -> CoachProfile:
-    existing_profile = db.query(CoachProfile).first()
-    if existing_profile:
-        raise ValueError("Профиль тренера уже существует")
+    existing = get_coach_by_email(db, profile.email)
+    if existing:
+        raise ValueError("Email already registered")
 
     password = profile.password[:72]
     hashed_password = get_password_hash(password)
+
+    users_count = db.query(CoachProfile).count()
+
+    if users_count == 0:
+        role = UserRole.ADMIN
+    else:
+        role = UserRole.USER
 
     db_profile = CoachProfile(
         full_name=profile.full_name,
         phone=profile.phone,
         email=profile.email,
         hashed_password=hashed_password,
+        role=role,
     )
+
     db.add(db_profile)
     db.commit()
     db.refresh(db_profile)

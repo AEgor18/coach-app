@@ -1,6 +1,6 @@
-from sqlalchemy import Boolean, Column, Integer, String
-
+from sqlalchemy import Boolean, Column, Integer, String, Enum
 from database import Base
+from models.roles import UserRole
 
 
 class CoachProfile(Base):
@@ -12,3 +12,5 @@ class CoachProfile(Base):
     email = Column(String(100), nullable=False, unique=True, index=True)
     hashed_password = Column(String(255), nullable=False)
     is_active = Column(Boolean, default=True)
+
+    role = Column(Enum(UserRole), default=UserRole.USER, nullable=False)

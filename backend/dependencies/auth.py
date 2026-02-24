@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from core.security import verify_token
 from crud.profile import get_coach_by_email
+from models.roles import UserRole
 from database import get_db
 
 security = HTTPBearer()
@@ -28,4 +29,11 @@ async def get_current_coach(
     if not coach.is_active:
         raise HTTPException(status_code=400, detail="Inactive coach")
 
+    return coach
+
+async def get_current_admin(
+    coach: CoachProfile = Depends(get_current_coach),
+):
+    if coach.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
     return coach

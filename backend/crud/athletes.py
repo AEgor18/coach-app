@@ -6,21 +6,22 @@ from models.athletes import Athlete, AthleteStatus
 from schemas.athletes import AthleteCreate, AthleteUpdate
 
 
-def get_athletes(db: Session) -> List[Athlete]:
-    return db.query(Athlete).all()
+def get_athletes(db: Session, coach_id: int) -> List[Athlete]:
+    return db.query(Athlete).filter(Athlete.coach_id == coach_id).all()
 
 
 def get_athlete(db: Session, athlete_id: int) -> Optional[Athlete]:
     return db.query(Athlete).filter(Athlete.id == athlete_id).first()
 
 
-def create_athlete(db: Session, athlete: AthleteCreate) -> Athlete:
+def create_athlete(db: Session, athlete: AthleteCreate, coach_id: int) -> Athlete:
     db_athlete = Athlete(
         name=athlete.name,
         sport_type=athlete.sport_type,
         age=athlete.age,
         phone=athlete.phone,
         progress=athlete.progress,
+        coach_id=coach_id,
     )
     db.add(db_athlete)
     db.commit()

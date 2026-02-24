@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from database import Base, engine
 from middleware.auth import AuthMiddleware
-from routers import athletes, nutrition, profile, reports, trainings
+from routers import athletes, nutrition, profile, reports, trainings, admin
 
 Base.metadata.create_all(bind=engine)
 
@@ -33,7 +33,7 @@ app.include_router(trainings.router)
 app.include_router(nutrition.router)
 app.include_router(reports.router)
 app.include_router(profile.router)
-
+app.include_router(admin.router)
 
 @app.get("/")
 async def root():

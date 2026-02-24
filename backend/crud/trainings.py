@@ -7,9 +7,9 @@ from models.trainings import TrainingPlan, TrainingStatus
 from schemas.trainings import TrainingPlanCreate, TrainingPlanUpdate
 
 
-def get_training_plans(db: Session) -> List[TrainingPlan]:
+def get_training_plans(db: Session, coach_id: int) -> List[TrainingPlan]:
     """Получить все планы тренировок"""
-    return db.query(TrainingPlan).all()
+    return db.query(TrainingPlan).filter(TrainingPlan.coach_id == coach_id).all()
 
 
 def get_training_plan(db: Session, plan_id: int) -> Optional[TrainingPlan]:
@@ -17,10 +17,9 @@ def get_training_plan(db: Session, plan_id: int) -> Optional[TrainingPlan]:
     return db.query(TrainingPlan).filter(TrainingPlan.id == plan_id).first()
 
 
-def create_training_plan(db: Session, plan: TrainingPlanCreate) -> TrainingPlan:
+def create_training_plan(db: Session, plan: TrainingPlanCreate, coach_id: int) -> TrainingPlan:
     """Создать новый план тренировки"""
     athletes = db.query(Athlete).filter(Athlete.id.in_(plan.athlete_ids)).all()
-
     db_plan = TrainingPlan(
         date=plan.date,
         title=plan.title,
@@ -29,6 +28,7 @@ def create_training_plan(db: Session, plan: TrainingPlanCreate) -> TrainingPlan:
         skill_level=plan.skill_level,
         description=plan.description or "",
         athletes=athletes,
+        coach_id=coach_id
     )
     db.add(db_plan)
     db.commit()

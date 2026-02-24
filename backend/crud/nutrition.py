@@ -7,9 +7,8 @@ from models.nutrition import NutritionPlan, NutritionStatus
 from schemas.nutrition import NutritionPlanCreate, NutritionPlanUpdate
 
 
-def get_nutrition_plans(db: Session) -> List[NutritionPlan]:
-    """Получить все планы питания"""
-    return db.query(NutritionPlan).all()
+def get_nutrition_plans(db: Session, coach_id: int) -> List[NutritionPlan]:
+    return db.query(NutritionPlan).filter(NutritionPlan.coach_id == coach_id).all()
 
 
 def get_nutrition_plan(db: Session, plan_id: int) -> Optional[NutritionPlan]:
@@ -17,8 +16,7 @@ def get_nutrition_plan(db: Session, plan_id: int) -> Optional[NutritionPlan]:
     return db.query(NutritionPlan).filter(NutritionPlan.id == plan_id).first()
 
 
-def create_nutrition_plan(db: Session, plan: NutritionPlanCreate) -> NutritionPlan:
-    """Создать новый план питания"""
+def create_nutrition_plan(db: Session, plan: NutritionPlanCreate, coach_id: int) -> NutritionPlan:
     athletes = db.query(Athlete).filter(Athlete.id.in_(plan.athlete_ids)).all()
 
     db_plan = NutritionPlan(
@@ -34,6 +32,7 @@ def create_nutrition_plan(db: Session, plan: NutritionPlanCreate) -> NutritionPl
         dinner=plan.dinner,
         description=plan.description,
         athletes=athletes,
+        coach_id=coach_id,
     )
     db.add(db_plan)
     db.commit()
