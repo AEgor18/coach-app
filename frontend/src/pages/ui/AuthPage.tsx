@@ -152,6 +152,7 @@ export const AuthPage = () => {
 			const res = await loginUser(loginData);
 			if (res) {
 				localStorage.setItem('access_token', res.access_token);
+				localStorage.setItem('refresh_token', res.refresh_token);
 				setSnackbar({
 					open: true,
 					message: 'Успешный вход!',
@@ -291,7 +292,6 @@ export const AuthPage = () => {
 					</Tabs>
 
 					<CardContent sx={{ p: 3 }}>
-						{/* Вход */}
 						{activeTab === 0 && (
 							<Box component='form' onSubmit={handleLoginSubmit}>
 								<TextField

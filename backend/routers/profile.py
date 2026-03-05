@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from datetime import datetime, timedelta
 
 from core.security import create_access_token, create_refresh_token, verify_token
 from crud.profile import (
@@ -18,7 +19,11 @@ from schemas.profile import (
     CoachProfileUpdate,
     LoginRequest,
     Token,
+    RefreshRequest
 )
+
+from crud.refresh_token import save_refresh_token, get_refresh_token, revoke_refresh_token
+from core.config import settings
 
 router = APIRouter(prefix="/api/profile", tags=["Coach Profile"])
 
@@ -40,6 +45,15 @@ async def login_coach(login_data: LoginRequest, db: Session = Depends(get_db)):
     access_token = create_access_token({"sub": coach.email})
     refresh_token = create_refresh_token({"sub": coach.email})
 
+    expires_at = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+
+    save_refresh_token(
+        db=db,
+        token=refresh_token,
+        email=coach.email,
+        expires_at=expires_at,
+    )
+
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
@@ -48,14 +62,50 @@ async def login_coach(login_data: LoginRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/refresh", response_model=Token)
-async def refresh_token(refresh_token: str):
+async def refresh_token_endpoint(
+    request: RefreshRequest,
+    db: Session = Depends(get_db),
+):
+    refresh_token = request.refresh_token
+
     payload = verify_token(refresh_token)
     if not payload or payload.get("type") != "refresh":
         raise HTTPException(401, detail="Invalid refresh token")
 
+    db_token = get_refresh_token(db, refresh_token)
+    if not db_token:
+        raise HTTPException(401, detail="Refresh token not found")
+
+    if db_token.revoked:
+        raise HTTPException(401, detail="Token revoked")
+
+    if db_token.expires_at < datetime.utcnow():
+        raise HTTPException(401, detail="Token expired")
+
+    revoke_refresh_token(db, refresh_token)
+
+    new_refresh = create_refresh_token({"sub": payload["sub"]})
     new_access = create_access_token({"sub": payload["sub"]})
 
-    return {"access_token": new_access, "token_type": "bearer"}
+    expires_at = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+
+    save_refresh_token(
+        db=db,
+        token=new_refresh,
+        email=payload["sub"],
+        expires_at=expires_at,
+    )
+
+    return {
+        "access_token": new_access,
+        "refresh_token": new_refresh,
+        "token_type": "bearer",
+    }
+
+@router.post("/logout")
+async def logout(refresh_token: str, db: Session = Depends(get_db)):
+    revoke_refresh_token(db, refresh_token)
+    return {"message": "Logged out"}
 
 
 @router.get("/me", response_model=CoachProfileResponse)

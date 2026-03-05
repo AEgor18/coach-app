@@ -70,8 +70,7 @@ export const AdminPage = () => {
 
 	const checkAccess = async () => {
 		try {
-			const token = localStorage.getItem('access_token')!;
-			const user = await getUser(token);
+			const user = await getUser();
 			if (!user || user.role !== 'admin') {
 				navigate('/');
 				return;
@@ -85,8 +84,7 @@ export const AdminPage = () => {
 	const fetchCoaches = async () => {
 		try {
 			setLoading(true);
-			const token = localStorage.getItem('access_token')!;
-			const data = await getAllCoaches(token);
+			const data = await getAllCoaches();
 			setCoaches(data || []);
 		} catch {
 			showSnackbar('Ошибка загрузки пользователей', 'error');
@@ -123,8 +121,7 @@ export const AdminPage = () => {
 		if (!confirmDialog.coachId) return;
 
 		try {
-			const token = localStorage.getItem('access_token')!;
-			await updateRole(confirmDialog.coachId, token);
+			await updateRole(confirmDialog.coachId);
 
 			setCoaches((prev) =>
 				prev.map((coach) =>

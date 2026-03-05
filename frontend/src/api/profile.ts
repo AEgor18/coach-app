@@ -1,67 +1,61 @@
-import { checkStatus } from "./checkStatus";
+import { fetchWithAuth } from './fetchWithAuth';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-export const registerUser = async (data) => {
-  const url = `${API_BASE_URL}/api/profile/register`;
-  const res = await fetch(url.toString(), {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  });
+export const registerUser = async (data: any) => {
+	const url = `${API_BASE_URL}/api/profile/register`;
+	const res = await fetch(url, {
+		method: 'POST',
+		headers: {
+			Accept: 'application/json',
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify(data),
+	});
 
-  await checkStatus(res);
+	if (!res.ok) {
+		const err = await res.json().catch(() => ({}));
+		throw new Error(err.detail || 'Registration failed');
+	}
 
-  return true;
+	return true;
 };
 
-export const loginUser = async (data) => {
-  const url = `${API_BASE_URL}/api/profile/login`;
-  const res = await fetch(url.toString(), {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  });
+export const loginUser = async (data: any) => {
+	const url = `${API_BASE_URL}/api/profile/login`;
+	const res = await fetch(url, {
+		method: 'POST',
+		headers: {
+			Accept: 'application/json',
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify(data),
+	});
 
-  await checkStatus(res);
+	if (!res.ok) {
+		const err = await res.json().catch(() => ({}));
+		throw new Error(err.detail || 'Login failed');
+	}
 
-  return res.json();
+	const json = await res.json();
+
+	localStorage.setItem('access_token', json.access_token);
+	localStorage.setItem('refresh_token', json.refresh_token);
+
+	return json;
 };
 
-export const getUser = async (token: string) => {
-  const url = `${API_BASE_URL}/api/profile/me`;
-  const res = await fetch(url.toString(), {
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  await checkStatus(res);
-
-  return res.json();
+export const getUser = async () => {
+	const url = `${API_BASE_URL}/api/profile/me`;
+	const res = await fetchWithAuth(url);
+	return res.json();
 };
 
-export const updateUser = async (token: string, data) => {
-  const url = `${API_BASE_URL}/api/profile/`;
-  const res = await fetch(url.toString(), {
-    method: "PUT",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(data),
-  });
-
-  await checkStatus(res);
-
-  return true;
+export const updateUser = async (data: any) => {
+	const url = `${API_BASE_URL}/api/profile/`;
+	const res = await fetchWithAuth(url, {
+		method: 'PUT',
+		body: JSON.stringify(data),
+	});
+	return true;
 };

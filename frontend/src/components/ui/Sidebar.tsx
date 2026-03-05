@@ -35,10 +35,7 @@ export function Sidebar() {
 
 	const fetchUser = async () => {
 		try {
-			const token = localStorage.getItem('access_token');
-			if (!token) return;
-
-			const res = await getUser(token);
+			const res = await getUser();
 
 			if (res) {
 				setUser(res);

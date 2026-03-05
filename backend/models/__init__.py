@@ -4,6 +4,7 @@ from .profile import CoachProfile
 from .reports import Report
 from .trainings import SkillLevel, TrainingPlan, TrainingStatus, TrainingType
 from .roles import UserRole
+from .refresh_token import RefreshToken
 
 __all__ = [
     "Athlete",
@@ -18,4 +19,5 @@ __all__ = [
     "NutritionStatus",
     "Report",
     "CoachProfile",
+    "RefreshToken"
 ]
