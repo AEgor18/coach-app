@@ -24,9 +24,7 @@ class CoachProfileBase(BaseModel):
 
 
 class CoachProfileCreate(CoachProfileBase):
-    password: str = Field(
-        ..., min_length=8, max_length=72, description="Пароль (8-72 символа)"
-    )
+    password: str = Field(..., min_length=8, max_length=72, description="Пароль (8-72 символа)")
 
 
 class CoachProfileUpdate(BaseModel):
@@ -40,6 +38,7 @@ class CoachProfileResponse(CoachProfileBase):
     id: int
     is_active: bool
     role: UserRole
+    avatar_url: Optional[str] = None
 
     class Config:
         from_attributes = True

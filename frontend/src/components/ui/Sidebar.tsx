@@ -21,6 +21,7 @@ interface User {
 	email: string;
 	role: string;
 	is_active: boolean;
+	avatar_url?: string | null;
 }
 
 export function Sidebar() {
@@ -47,9 +48,11 @@ export function Sidebar() {
 	};
 
 	const formatFullName = (fullName: string) => {
-		const names = fullName.trim().split(' ');
+		const names = fullName.trim().split(' ').filter(Boolean);
 
-		if (names.length === 1) {
+		if (names.length === 0) {
+			setShowName('?');
+		} else if (names.length === 1) {
 			setShowName(names[0].slice(0, 1).toUpperCase());
 		} else {
 			const initials =
@@ -58,6 +61,8 @@ export function Sidebar() {
 			setShowName(initials);
 		}
 	};
+
+	const hasAvatar = user?.avatar_url && user.avatar_url.trim() !== '';
 
 	return (
 		<Box
@@ -70,21 +75,32 @@ export function Sidebar() {
 				padding: '30px 20px',
 			}}
 		>
-			{/* Профиль */}
 			<Box sx={{ textAlign: 'center', mb: 5 }}>
 				<Avatar
 					sx={{
 						width: 80,
 						height: 80,
-						backgroundColor: 'white',
-						color: '#377CD6',
-						border: '3px solid white',
-						fontSize: '32px',
-						margin: '0 auto 15px',
-						boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+						...(hasAvatar
+							? {
+									objectFit: 'cover',
+									border: '3px solid white',
+									margin: '0 auto 15px',
+									boxShadow:
+										'0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+								}
+							: {
+									backgroundColor: 'white',
+									color: '#377CD6',
+									border: '3px solid white',
+									fontSize: '32px',
+									margin: '0 auto 15px',
+									boxShadow:
+										'0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+								}),
 					}}
+					src={user?.avatar_url}
 				>
-					{showName}
+					{!hasAvatar && showName}
 				</Avatar>
 
 				<Typography
@@ -110,7 +126,6 @@ export function Sidebar() {
 				</Typography>
 			</Box>
 
-			{/* Основные страницы */}
 			<List sx={{ p: 0 }}>
 				{sidebarPages.map((item) => {
 					const isActive = location.pathname === item.link;

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -13,26 +13,53 @@ from crud.athletes import (
 )
 from database import get_db
 from dependencies.auth import get_current_coach
-from models.athletes import AthleteStatus
+from models.athletes import AthleteStatus, SportType
 from models.profile import CoachProfile
 from schemas.athletes import (
     AthleteCreate,
     AthleteResponse,
     AthleteStatusUpdate,
     AthleteUpdate,
+    PaginatedResponse
 )
+
 
 router = APIRouter(prefix="/api/athletes", tags=["Athletes"])
 
-
-@router.get("/", response_model=List[AthleteResponse])
+@router.get("/", response_model=PaginatedResponse[AthleteResponse])
 async def read_athletes(
-    db: Session = Depends(get_db), coach: CoachProfile = Depends(get_current_coach)
+    search: Optional[str] = None,
+    sport_type: Optional[SportType] = None,
+    status: Optional[AthleteStatus] = None,
+    min_age: Optional[int] = None,
+    max_age: Optional[int] = None,
+    sort_by: str = "id",
+    sort_order: str = "asc",
+    page: int = 1,
+    limit: int = 10,
+    db: Session = Depends(get_db),
+    coach: CoachProfile = Depends(get_current_coach),
 ):
-    """Получить список спортсменов текущего тренера"""
-    athletes = get_athletes(db, coach_id=coach.id)
-    return athletes
-
+    athletes, total = get_athletes(
+        db=db,
+        coach_id=coach.id,
+        search=search,
+        sport_type=sport_type,
+        status=status,
+        min_age=min_age,
+        max_age=max_age,
+        sort_by=sort_by,
+        sort_order=sort_order,
+        page=page,
+        limit=limit,
+    )
+    return PaginatedResponse(
+        data=athletes,
+        total=total,
+        page=page,
+        limit=limit,
+        pages=(total + limit - 1)
+    )
 
 @router.post("/", response_model=AthleteResponse, status_code=status.HTTP_201_CREATED)
 async def create_new_athlete(

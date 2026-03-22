@@ -345,7 +345,6 @@ export const AuthPage = () => {
 							</Box>
 						)}
 
-						{/* Регистрация */}
 						{activeTab === 1 && (
 							<Box
 								component='form'

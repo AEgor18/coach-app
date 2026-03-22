@@ -91,7 +91,7 @@ export const EditTrainingModal: React.FC<EditTrainingModalProps> = ({
 	const fetchAthletes = async () => {
 		try {
 			const athletesData = await getAllAthletes();
-			setAthletes(athletesData);
+			setAthletes(athletesData.data);
 		} catch (error) {
 			console.error('Ошибка при загрузке спортсменов:', error);
 		}

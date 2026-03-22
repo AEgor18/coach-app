@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+import os
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 
@@ -7,7 +8,6 @@ from crud.profile import (
     authenticate_coach,
     create_coach_profile,
     delete_coach_profile,
-    get_coach_by_email,
     update_coach_profile,
 )
 from database import get_db
@@ -21,9 +21,9 @@ from schemas.profile import (
     Token,
     RefreshRequest
 )
-
 from crud.refresh_token import save_refresh_token, get_refresh_token, revoke_refresh_token
 from core.config import settings
+from core.s3 import s3_storage
 
 router = APIRouter(prefix="/api/profile", tags=["Coach Profile"])
 
@@ -35,7 +35,6 @@ async def register_coach(profile: CoachProfileCreate, db: Session = Depends(get_
     except ValueError as e:
         raise HTTPException(400, detail=str(e))
 
-
 @router.post("/login", response_model=Token)
 async def login_coach(login_data: LoginRequest, db: Session = Depends(get_db)):
     coach = authenticate_coach(db, login_data.email, login_data.password)
@@ -46,13 +45,7 @@ async def login_coach(login_data: LoginRequest, db: Session = Depends(get_db)):
     refresh_token = create_refresh_token({"sub": coach.email})
 
     expires_at = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-
-    save_refresh_token(
-        db=db,
-        token=refresh_token,
-        email=coach.email,
-        expires_at=expires_at,
-    )
+    save_refresh_token(db=db, token=refresh_token, email=coach.email, expires_at=expires_at)
 
     return {
         "access_token": access_token,
@@ -60,27 +53,16 @@ async def login_coach(login_data: LoginRequest, db: Session = Depends(get_db)):
         "token_type": "bearer",
     }
 
-
 @router.post("/refresh", response_model=Token)
-async def refresh_token_endpoint(
-    request: RefreshRequest,
-    db: Session = Depends(get_db),
-):
+async def refresh_token_endpoint(request: RefreshRequest, db: Session = Depends(get_db)):
     refresh_token = request.refresh_token
-
     payload = verify_token(refresh_token)
     if not payload or payload.get("type") != "refresh":
         raise HTTPException(401, detail="Invalid refresh token")
 
     db_token = get_refresh_token(db, refresh_token)
-    if not db_token:
-        raise HTTPException(401, detail="Refresh token not found")
-
-    if db_token.revoked:
-        raise HTTPException(401, detail="Token revoked")
-
-    if db_token.expires_at < datetime.utcnow():
-        raise HTTPException(401, detail="Token expired")
+    if not db_token or db_token.revoked or db_token.expires_at < datetime.utcnow():
+        raise HTTPException(401, detail="Invalid or expired token")
 
     revoke_refresh_token(db, refresh_token)
 
@@ -88,13 +70,7 @@ async def refresh_token_endpoint(
     new_access = create_access_token({"sub": payload["sub"]})
 
     expires_at = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-
-    save_refresh_token(
-        db=db,
-        token=new_refresh,
-        email=payload["sub"],
-        expires_at=expires_at,
-    )
+    save_refresh_token(db=db, token=new_refresh, email=payload["sub"], expires_at=expires_at)
 
     return {
         "access_token": new_access,
@@ -107,11 +83,14 @@ async def logout(refresh_token: str, db: Session = Depends(get_db)):
     revoke_refresh_token(db, refresh_token)
     return {"message": "Logged out"}
 
-
 @router.get("/me", response_model=CoachProfileResponse)
-async def get_current_coach_profile(coach: CoachProfile = Depends(get_current_coach)):
-    return coach
+async def get_current_coach_profile(
+    coach: CoachProfile = Depends(get_current_coach),
+):
+    if coach.avatar_url:
+        coach.avatar_url = s3_storage.get_presigned_url(coach.avatar_url)
 
+    return coach
 
 @router.put("/", response_model=CoachProfileResponse)
 async def update_coach_profile_data(
@@ -124,7 +103,6 @@ async def update_coach_profile_data(
         raise HTTPException(404, detail="Coach not found")
     return updated
 
-
 @router.delete("/", status_code=204)
 async def delete_coach_profile_endpoint(
     db: Session = Depends(get_db), coach: CoachProfile = Depends(get_current_coach)
@@ -133,3 +111,48 @@ async def delete_coach_profile_endpoint(
     if not deleted:
         raise HTTPException(404, detail="Coach not found")
     return None
+
+@router.post("/avatar", response_model=CoachProfileResponse)
+async def upload_avatar(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    coach: CoachProfile = Depends(get_current_coach),
+):
+    if file.content_type not in ["image/jpeg", "image/png"]:
+        raise HTTPException(400, detail="Only JPEG or PNG files are allowed")
+
+    contents = await file.read()
+    if len(contents) > 2 * 1024 * 1024:
+        raise HTTPException(400, detail="File too large (max 2MB)")
+
+    key = f"avatars/{coach.id}_{file.filename}"
+
+    try:
+        s3_storage.upload_file(contents, key, file.content_type)
+    except Exception as e:
+        raise HTTPException(500, detail=f"S3 upload error: {e}")
+
+    coach.avatar_url = key
+
+    db.commit()
+    db.refresh(coach)
+
+    return coach
+
+@router.delete("/avatar")
+async def delete_avatar(
+    db: Session = Depends(get_db),
+    coach: CoachProfile = Depends(get_current_coach),
+):
+    if not coach.avatar_url:
+        raise HTTPException(404, detail="Avatar not found")
+
+    try:
+        s3_storage.delete_file(coach.avatar_url)
+    except Exception as e:
+        raise HTTPException(500, detail=f"S3 delete error: {e}")
+
+    coach.avatar_url = None
+    db.commit()
+
+    return {"message": "Avatar deleted"}

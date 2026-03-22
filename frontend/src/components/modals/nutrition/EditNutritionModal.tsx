@@ -101,7 +101,7 @@ export const EditNutritionModal: React.FC<EditNutritionModalProps> = ({
 	const fetchAthletes = async () => {
 		try {
 			const athletesData = await getAllAthletes();
-			setAthletes(athletesData);
+			setAthletes(athletesData.data);
 		} catch (error) {
 			console.error('Ошибка при загрузке спортсменов:', error);
 		}
@@ -252,7 +252,6 @@ export const EditNutritionModal: React.FC<EditNutritionModalProps> = ({
 			</DialogTitle>
 
 			<DialogContent sx={{ p: 3 }}>
-				{/* Тот же контент что и в AddNutritionModal, но с текущими данными */}
 				<Box sx={{ mb: 3, mt: 3 }}>
 					<Typography
 						variant='subtitle1'

@@ -59,3 +59,41 @@ export const updateUser = async (data: any) => {
 	});
 	return true;
 };
+
+export const uploadAvatar = async (file: File): Promise<boolean> => {
+	const formData = new FormData();
+	formData.append('file', file, file.name);
+
+	const url = `${API_BASE_URL}/api/profile/avatar`;
+	const token = localStorage.getItem('access_token');
+
+	const res = await fetch(url, {
+		method: 'POST',
+		headers: {
+			Authorization: `Bearer ${token}`,
+			Accept: 'application/json',
+		},
+		body: formData,
+	});
+
+	if (!res.ok) {
+		const err = await res.json().catch(() => ({}));
+		throw new Error(err.detail || 'Failed to upload avatar');
+	}
+
+	return true;
+};
+
+export const deleteAvatar = async (): Promise<boolean> => {
+	const url = `${API_BASE_URL}/api/profile/avatar`;
+	const res = await fetchWithAuth(url, {
+		method: 'DELETE',
+	});
+
+	if (!res.ok) {
+		const err = await res.json().catch(() => ({}));
+		throw new Error(err.detail || 'Failed to delete avatar');
+	}
+
+	return true;
+};

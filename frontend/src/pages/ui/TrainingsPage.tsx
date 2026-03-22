@@ -477,7 +477,6 @@ export const TrainingsPage = () => {
 				))}
 			</Grid>
 
-			{/* Модальное окно добавления */}
 			<AddTrainingModal
 				open={addModalOpen}
 				onClose={() => setAddModalOpen(false)}
@@ -485,7 +484,6 @@ export const TrainingsPage = () => {
 				loading={loading}
 			/>
 
-			{/* Модальное окно редактирования */}
 			<EditTrainingModal
 				open={editModalOpen}
 				onClose={handleCloseEdit}

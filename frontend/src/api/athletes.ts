@@ -2,8 +2,29 @@ import { fetchWithAuth } from './fetchWithAuth';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-export const getAllAthletes = async () => {
-	const url = `${API_BASE_URL}/api/athletes`;
+export interface AthleteQueryParams {
+	search?: string;
+	sport_type?: string;
+	status?: string;
+	page?: number;
+	limit?: number;
+	sort_by?: string;
+	sort_order?: 'asc' | 'desc';
+}
+
+export const getAllAthletes = async (params?: AthleteQueryParams) => {
+	const query = new URLSearchParams();
+
+	if (params) {
+		Object.entries(params).forEach(([key, value]) => {
+			if (value !== undefined && value !== '' && value !== 'Все') {
+				query.append(key, String(value));
+			}
+		});
+	}
+
+	const url = `${API_BASE_URL}/api/athletes?${query.toString()}`;
+
 	const res = await fetchWithAuth(url);
 	return res.json();
 };

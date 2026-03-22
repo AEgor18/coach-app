@@ -55,7 +55,7 @@ export const NutritionPage: React.FC = () => {
 	const fetchPlans = async () => {
 		try {
 			setLoading(true);
-			const res = await getAllNutritions(); // ← убрали token
+			const res = await getAllNutritions();
 
 			if (res) {
 				setPlans(res);
@@ -71,7 +71,7 @@ export const NutritionPage: React.FC = () => {
 	const handleAddNutrition = async (nutritionData: NutritionFormData) => {
 		try {
 			setLoading(true);
-			await createNutrition(nutritionData); // ← убрали token
+			await createNutrition(nutritionData);
 
 			setAddModalOpen(false);
 			showSnackbar('План питания успешно создан', 'success');
@@ -89,7 +89,7 @@ export const NutritionPage: React.FC = () => {
 
 		try {
 			setLoading(true);
-			await updateNutritionById(selectedPlan.id, nutritionData); // ← убрали token
+			await updateNutritionById(selectedPlan.id, nutritionData);
 
 			setEditModalOpen(false);
 			setSelectedPlan(null);
@@ -116,7 +116,7 @@ export const NutritionPage: React.FC = () => {
 	const handleDelete = async (id: number) => {
 		try {
 			setLoading(true);
-			await deleteNutritionById(id); // ← убрали token
+			await deleteNutritionById(id);
 
 			showSnackbar('План питания успешно удален', 'success');
 			await fetchPlans();
@@ -520,7 +520,6 @@ export const NutritionPage: React.FC = () => {
 				))}
 			</Grid>
 
-			{/* Модальное окно добавления */}
 			<AddNutritionModal
 				open={addModalOpen}
 				onClose={() => setAddModalOpen(false)}
@@ -528,7 +527,6 @@ export const NutritionPage: React.FC = () => {
 				loading={loading}
 			/>
 
-			{/* Модальное окно редактирования */}
 			<EditNutritionModal
 				open={editModalOpen}
 				onClose={handleCloseEdit}

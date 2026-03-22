@@ -1,10 +1,11 @@
 import re
-from typing import Optional
+from typing import Optional, Generic, TypeVar, List
 
 from pydantic import BaseModel, Field, validator
 
 from models.athletes import AthleteStatus, SportType
 
+T = TypeVar('T')
 
 class AthleteBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100, description="Имя спортсмена")
@@ -79,5 +80,17 @@ class AthleteSimpleResponse(BaseModel):
     name: str
     sport_type: SportType
 
+    class Config:
+        from_attributes = True
+
+
+class PaginatedResponse(BaseModel, Generic[T]):
+    """Универсальная схема для пагинированных ответов"""
+    data: List[T]
+    total: int
+    page: int
+    limit: int
+    pages: int
+    
     class Config:
         from_attributes = True

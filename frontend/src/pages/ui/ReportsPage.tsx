@@ -439,7 +439,6 @@ export const ReportsPage: React.FC = () => {
 				))}
 			</Grid>
 
-			{/* Модальное окно добавления */}
 			<AddReportModal
 				open={addModalOpen}
 				onClose={() => setAddModalOpen(false)}
@@ -447,7 +446,6 @@ export const ReportsPage: React.FC = () => {
 				loading={loading}
 			/>
 
-			{/* Модальное окно редактирования */}
 			<EditReportModal
 				open={editModalOpen}
 				onClose={handleCloseEdit}

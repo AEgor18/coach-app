@@ -33,7 +33,6 @@ from .trainings import (
 )
 
 __all__ = [
-    # Athletes
     "SportType",
     "AthleteStatus",
     "AthleteBase",
@@ -41,7 +40,6 @@ __all__ = [
     "AthleteUpdate",
     "AthleteResponse",
     "AthleteSimpleResponse",
-    # Trainings
     "TrainingType",
     "TrainingStatus",
     "SkillLevel",
@@ -49,19 +47,16 @@ __all__ = [
     "TrainingPlanCreate",
     "TrainingPlanUpdate",
     "TrainingPlanResponse",
-    # Nutrition
     "NutritionType",
     "NutritionStatus",
     "NutritionPlanBase",
     "NutritionPlanCreate",
     "NutritionPlanUpdate",
     "NutritionPlanResponse",
-    # Reports
     "ReportBase",
     "ReportCreate",
     "ReportUpdate",
     "ReportResponse",
-    # Profile
     "CoachProfileBase",
     "CoachProfileCreate",
     "CoachProfileUpdate",
