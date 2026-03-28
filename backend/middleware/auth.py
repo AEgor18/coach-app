@@ -21,6 +21,10 @@ class AuthMiddleware(BaseHTTPMiddleware):
             "/docs",
             "/redoc",
             "/openapi.json",
+            "/sitemap.xml",    
+            "/robots.txt",      
+            "/json-ld",
+            "/api/info",
         }
 
         if request.url.path.startswith("/docs") or request.url.path.startswith(

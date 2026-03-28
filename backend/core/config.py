@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 10
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
-
+    BASE_URL: str = "http://localhost"
     PROJECT_NAME: str = "Fitness Coach App"
 
     AWS_ACCESS_KEY: str = "minioadmin"          
@@ -15,6 +15,11 @@ class Settings(BaseSettings):
     AWS_REGION: str = "us-east-1"
     AWS_BUCKET_NAME: str = "avatars"          
     AWS_ENDPOINT_URL: str = "http://127.0.0.1:9000"
+
+    OPENWEATHER_API_KEY: str = ""          
+    OPENWEATHER_BASE_URL: str = "https://api.openweathermap.org/data/2.5"
+    WEATHER_CACHE_MINUTES: int = 30
+    OPENWEATHER_API_KEY: str = "0e3e7db659a35f7ef331243fd896b5b7"
     class Config:
         env_file = ".env"
 

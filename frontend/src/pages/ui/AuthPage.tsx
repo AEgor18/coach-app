@@ -15,6 +15,7 @@ import { useEffect, useState } from 'react';
 import { loginUser, registerUser } from '../../api/profile';
 import { Header } from '../../components/ui/Header';
 import { useNavigate } from 'react-router-dom';
+import Seo from '../../components/Seo';
 
 export const AuthPage = () => {
 	const navigate = useNavigate();
@@ -50,7 +51,6 @@ export const AuthPage = () => {
 			const value = event.target.value;
 			setLoginData((prev) => ({ ...prev, [field]: value }));
 
-			// Live validation
 			if (field === 'email') {
 				if (!value)
 					setErrors((prev) => ({ ...prev, email: 'Введите email' }));
@@ -213,240 +213,389 @@ export const AuthPage = () => {
 	const handleCloseSnackbar = () =>
 		setSnackbar((prev) => ({ ...prev, open: false }));
 
-	return (
-		<Box>
-			<Header />
-			<Snackbar
-				open={snackbar.open}
-				autoHideDuration={4000}
-				onClose={handleCloseSnackbar}
-				anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-			>
-				<Alert
-					onClose={handleCloseSnackbar}
-					severity={snackbar.severity}
-					sx={{ width: '100%' }}
-				>
-					{snackbar.message}
-				</Alert>
-			</Snackbar>
+	const authSchema = {
+		'@context': 'https://schema.org',
+		'@type': 'WebApplication',
+		name: 'Coach App — Вход и регистрация',
+		description:
+			'Профессиональная платформа для тренеров: управление спортсменами, тренировками и питанием',
+		applicationCategory: 'SportsApplication',
+		operatingSystem: 'Web',
+		browserRequirements: 'Requires JavaScript',
+		offers: {
+			'@type': 'Offer',
+			availability: 'https://schema.org/InStock',
+			price: '0',
+			priceCurrency: 'RUB',
+		},
+	};
 
-			<Box
-				sx={{
-					display: 'flex',
-					justifyContent: 'center',
-					alignItems: 'center',
-					p: 3,
-					mt: 20,
-				}}
-			>
-				<Card
+	return (
+		<>
+			<Seo
+				title={
+					activeTab === 0 ? 'Вход в систему' : 'Регистрация тренера'
+				}
+				description='Coach App — профессиональное приложение для тренеров. Управление спортсменами, планирование тренировок, аналитика прогресса и питание в одном месте.'
+				canonical={activeTab === 0 ? '/auth/login' : '/auth/register'}
+				schemaMarkup={authSchema}
+			/>
+
+			<Box component='main' aria-label='Страница авторизации'>
+				<Header />
+
+				<Snackbar
+					open={snackbar.open}
+					autoHideDuration={4000}
+					onClose={handleCloseSnackbar}
+					anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+				>
+					<Alert
+						onClose={handleCloseSnackbar}
+						severity={snackbar.severity}
+						sx={{ width: '100%' }}
+						role='status'
+						aria-live='polite'
+					>
+						{snackbar.message}
+					</Alert>
+				</Snackbar>
+
+				<Box
 					sx={{
-						width: '100%',
-						maxWidth: 450,
-						borderRadius: '12px',
-						boxShadow: '0 10px 25px -3px rgba(0, 0, 0, 0.1)',
-						overflow: 'hidden',
+						display: 'flex',
+						justifyContent: 'center',
+						alignItems: 'center',
+						p: 3,
+						mt: 20,
 					}}
 				>
-					<Box
+					<Card
 						sx={{
-							backgroundColor: '#377CD6',
-							color: 'white',
-							padding: '30px',
-							textAlign: 'center',
+							width: '100%',
+							maxWidth: 450,
+							borderRadius: '12px',
+							boxShadow: '0 10px 25px -3px rgba(0, 0, 0, 0.1)',
+							overflow: 'hidden',
 						}}
+						role='region'
+						aria-labelledby='auth-card-title'
 					>
-						<Typography
-							sx={{ fontSize: '28px', fontWeight: 'bold', mb: 1 }}
-						>
-							Тренерский Центр
-						</Typography>
-						<Typography sx={{ fontSize: '16px', opacity: 0.9 }}>
-							Профессиональная платформа для тренеров
-						</Typography>
-					</Box>
-
-					<Tabs
-						value={activeTab}
-						onChange={handleTabChange}
-						variant='fullWidth'
-						sx={{
-							borderBottom: '1px solid #E2E8F0',
-							'& .MuiTab-root': {
-								padding: '18px',
-								fontSize: '16px',
-								fontWeight: 600,
-								color: '#4A5568',
-								textTransform: 'none',
-							},
-							'& .Mui-selected': { color: '#377CD6' },
-							'& .MuiTabs-indicator': {
+						<Box
+							sx={{
 								backgroundColor: '#377CD6',
-								height: '3px',
-							},
-						}}
-					>
-						<Tab label='Вход' />
-						<Tab label='Регистрация' />
-					</Tabs>
-
-					<CardContent sx={{ p: 3 }}>
-						{activeTab === 0 && (
-							<Box component='form' onSubmit={handleLoginSubmit}>
-								<TextField
-									fullWidth
-									label='Email'
-									type='email'
-									value={loginData.email}
-									onChange={handleLoginChange('email')}
-									placeholder='example@mail.ru'
-									required
-									error={!!errors.email}
-									helperText={errors.email}
-									sx={{ mb: 2.5 }}
-								/>
-
-								<TextField
-									fullWidth
-									label='Пароль'
-									type='password'
-									value={loginData.password}
-									onChange={handleLoginChange('password')}
-									placeholder='Введите пароль'
-									required
-									error={!!errors.password}
-									helperText={errors.password}
-									sx={{ mb: 2 }}
-								/>
-
-								<Button
-									type='submit'
-									fullWidth
-									variant='contained'
-									sx={{
-										backgroundColor: '#377CD6',
-										padding: '14px 20px',
-										fontSize: '16px',
-										fontWeight: 600,
-										borderRadius: '8px',
-										mb: 2,
-										'&:hover': {
-											backgroundColor: '#2B6CB0',
-											transform: 'translateY(-1px)',
-											boxShadow:
-												'0 6px 12px rgba(55, 124, 214, 0.3)',
-										},
-										transition: 'all 0.3s ease',
-									}}
-								>
-									Войти
-								</Button>
-							</Box>
-						)}
-
-						{activeTab === 1 && (
-							<Box
-								component='form'
-								onSubmit={handleRegisterSubmit}
+								color: 'white',
+								padding: '30px',
+								textAlign: 'center',
+							}}
+						>
+							<Typography
+								component={activeTab === 0 ? 'h1' : 'h2'}
+								id='auth-card-title'
+								sx={{
+									fontSize: '28px',
+									fontWeight: 'bold',
+									mb: 1,
+								}}
 							>
-								<TextField
-									fullWidth
-									label='ФИО'
-									value={registerData.fullName}
-									onChange={handleRegisterChange('fullName')}
-									placeholder='Иванов Алексей Сергеевич'
-									required
-									error={!!errors.fullName}
-									helperText={errors.fullName}
-									sx={{ mb: 2 }}
-								/>
+								Тренерский Центр
+							</Typography>
+							<Typography sx={{ fontSize: '16px', opacity: 0.9 }}>
+								Профессиональная платформа для тренеров
+							</Typography>
+						</Box>
 
-								<TextField
-									fullWidth
-									label='Email'
-									type='email'
-									value={registerData.email}
-									onChange={handleRegisterChange('email')}
-									placeholder='example@mail.ru'
-									required
-									error={!!errors.email}
-									helperText={errors.email}
-									sx={{ mb: 2 }}
-								/>
+						<Tabs
+							value={activeTab}
+							onChange={handleTabChange}
+							variant='fullWidth'
+							role='tablist'
+							aria-label='Выбор действия: вход или регистрация'
+							sx={{
+								borderBottom: '1px solid #E2E8F0',
+								'& .MuiTab-root': {
+									padding: '18px',
+									fontSize: '16px',
+									fontWeight: 600,
+									color: '#4A5568',
+									textTransform: 'none',
+								},
+								'& .Mui-selected': { color: '#377CD6' },
+								'& .MuiTabs-indicator': {
+									backgroundColor: '#377CD6',
+									height: '3px',
+								},
+							}}
+						>
+							<Tab
+								label='Вход'
+								role='tab'
+								aria-selected={activeTab === 0}
+								aria-controls='login-panel'
+								id='login-tab'
+							/>
+							<Tab
+								label='Регистрация'
+								role='tab'
+								aria-selected={activeTab === 1}
+								aria-controls='register-panel'
+								id='register-tab'
+							/>
+						</Tabs>
 
-								<Grid container spacing={2} sx={{ mb: 2 }}>
-									<Grid item xs={12} sm={6}>
-										<TextField
-											fullWidth
-											label='Пароль'
-											type='password'
-											value={registerData.password}
-											onChange={handleRegisterChange(
-												'password',
-											)}
-											placeholder='Придумайте пароль'
-											required
-											error={!!errors.password}
-											helperText={errors.password}
-										/>
-									</Grid>
-									<Grid item xs={12} sm={6}>
-										<TextField
-											fullWidth
-											label='Подтверждение'
-											type='password'
-											value={registerData.confirmPassword}
-											onChange={handleRegisterChange(
-												'confirmPassword',
-											)}
-											placeholder='Повторите пароль'
-											required
-											error={!!errors.confirmPassword}
-											helperText={errors.confirmPassword}
-										/>
-									</Grid>
-								</Grid>
-
-								<TextField
-									fullWidth
-									label='Телефон'
-									type='tel'
-									value={registerData.phone}
-									onChange={handleRegisterChange('phone')}
-									placeholder='+7 999 123-45-67'
-									required
-									error={!!errors.phone}
-									helperText={errors.phone}
-									sx={{ mb: 3 }}
-								/>
-
-								<Button
-									type='submit'
-									fullWidth
-									variant='contained'
-									sx={{
-										backgroundColor: '#377CD6',
-										padding: '14px 20px',
-										fontSize: '16px',
-										fontWeight: 600,
-										borderRadius: '8px',
-										'&:hover': {
-											backgroundColor: '#2B6CB0',
-											transform: 'translateY(-1px)',
-											boxShadow:
-												'0 6px 12px rgba(55, 124, 214, 0.3)',
-										},
-										transition: 'all 0.3s ease',
-									}}
+						<CardContent sx={{ p: 3 }}>
+							{activeTab === 0 && (
+								<Box
+									component='form'
+									onSubmit={handleLoginSubmit}
+									noValidate
+									role='form'
+									aria-labelledby='login-form-title'
+									id='login-panel'
 								>
-									Зарегистрироваться
-								</Button>
-							</Box>
-						)}
-					</CardContent>
-				</Card>
+									<TextField
+										fullWidth
+										label='Email'
+										type='email'
+										value={loginData.email}
+										onChange={handleLoginChange('email')}
+										placeholder='example@mail.ru'
+										required
+										error={!!errors.email}
+										helperText={errors.email}
+										sx={{ mb: 2.5 }}
+										inputProps={{
+											'aria-required': 'true',
+											'aria-describedby': errors.email
+												? 'email-error'
+												: undefined,
+											autoComplete: 'email',
+										}}
+										id='login-email'
+										name='email'
+									/>
+
+									<TextField
+										fullWidth
+										label='Пароль'
+										type='password'
+										value={loginData.password}
+										onChange={handleLoginChange('password')}
+										placeholder='Введите пароль'
+										required
+										error={!!errors.password}
+										helperText={errors.password}
+										sx={{ mb: 2 }}
+										inputProps={{
+											'aria-required': 'true',
+											'aria-describedby': errors.password
+												? 'password-error'
+												: undefined,
+											autoComplete: 'current-password',
+										}}
+										id='login-password'
+										name='password'
+									/>
+
+									<Button
+										type='submit'
+										fullWidth
+										variant='contained'
+										sx={{
+											backgroundColor: '#377CD6',
+											padding: '14px 20px',
+											fontSize: '16px',
+											fontWeight: 600,
+											borderRadius: '8px',
+											mb: 2,
+											'&:hover': {
+												backgroundColor: '#2B6CB0',
+												transform: 'translateY(-1px)',
+												boxShadow:
+													'0 6px 12px rgba(55, 124, 214, 0.3)',
+											},
+											transition: 'all 0.3s ease',
+										}}
+										aria-label='Войти в аккаунт'
+									>
+										Войти
+									</Button>
+								</Box>
+							)}
+
+							{activeTab === 1 && (
+								<Box
+									component='form'
+									onSubmit={handleRegisterSubmit}
+									noValidate
+									role='form'
+									aria-labelledby='register-form-title'
+									id='register-panel'
+								>
+									<Typography
+										id='register-form-title'
+										sx={{ srOnly: true }}
+									>
+										Форма регистрации нового тренера
+									</Typography>
+
+									<TextField
+										fullWidth
+										label='ФИО'
+										value={registerData.fullName}
+										onChange={handleRegisterChange(
+											'fullName',
+										)}
+										placeholder='Иванов Алексей Сергеевич'
+										required
+										error={!!errors.fullName}
+										helperText={errors.fullName}
+										sx={{ mb: 2 }}
+										inputProps={{
+											'aria-required': 'true',
+											'aria-describedby': errors.fullName
+												? 'fullname-error'
+												: undefined,
+											autoComplete: 'name',
+										}}
+										id='register-fullname'
+										name='fullName'
+									/>
+
+									<TextField
+										fullWidth
+										label='Email'
+										type='email'
+										value={registerData.email}
+										onChange={handleRegisterChange('email')}
+										placeholder='example@mail.ru'
+										required
+										error={!!errors.email}
+										helperText={errors.email}
+										sx={{ mb: 2 }}
+										inputProps={{
+											'aria-required': 'true',
+											'aria-describedby': errors.email
+												? 'reg-email-error'
+												: undefined,
+											autoComplete: 'email',
+										}}
+										id='register-email'
+										name='email'
+									/>
+
+									<Grid container spacing={2} sx={{ mb: 2 }}>
+										<Grid item xs={12} sm={6}>
+											<TextField
+												fullWidth
+												label='Пароль'
+												type='password'
+												value={registerData.password}
+												onChange={handleRegisterChange(
+													'password',
+												)}
+												placeholder='Придумайте пароль'
+												required
+												error={!!errors.password}
+												helperText={errors.password}
+												inputProps={{
+													'aria-required': 'true',
+													'aria-describedby':
+														errors.password
+															? 'reg-password-error'
+															: undefined,
+													autoComplete:
+														'new-password',
+													minLength: 8,
+												}}
+												id='register-password'
+												name='password'
+											/>
+										</Grid>
+										<Grid item xs={12} sm={6}>
+											<TextField
+												fullWidth
+												label='Подтверждение'
+												type='password'
+												value={
+													registerData.confirmPassword
+												}
+												onChange={handleRegisterChange(
+													'confirmPassword',
+												)}
+												placeholder='Повторите пароль'
+												required
+												error={!!errors.confirmPassword}
+												helperText={
+													errors.confirmPassword
+												}
+												inputProps={{
+													'aria-required': 'true',
+													'aria-describedby':
+														errors.confirmPassword
+															? 'reg-confirm-error'
+															: undefined,
+													autoComplete:
+														'new-password',
+												}}
+												id='register-confirm'
+												name='confirmPassword'
+											/>
+										</Grid>
+									</Grid>
+
+									<TextField
+										fullWidth
+										label='Телефон'
+										type='tel'
+										value={registerData.phone}
+										onChange={handleRegisterChange('phone')}
+										placeholder='+7 999 123-45-67'
+										required
+										error={!!errors.phone}
+										helperText={errors.phone}
+										sx={{ mb: 3 }}
+										inputProps={{
+											'aria-required': 'true',
+											'aria-describedby': errors.phone
+												? 'phone-error'
+												: undefined,
+											autoComplete: 'tel',
+											pattern:
+												'^\+?\d{1,3}?[-.\s]?\(?\d{1,4}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,9}$',
+										}}
+										id='register-phone'
+										name='phone'
+									/>
+
+									<Button
+										type='submit'
+										fullWidth
+										variant='contained'
+										sx={{
+											backgroundColor: '#377CD6',
+											padding: '14px 20px',
+											fontSize: '16px',
+											fontWeight: 600,
+											borderRadius: '8px',
+											'&:hover': {
+												backgroundColor: '#2B6CB0',
+												transform: 'translateY(-1px)',
+												boxShadow:
+													'0 6px 12px rgba(55, 124, 214, 0.3)',
+											},
+											transition: 'all 0.3s ease',
+										}}
+										aria-label='Зарегистрировать новый аккаунт'
+									>
+										Зарегистрироваться
+									</Button>
+								</Box>
+							)}
+						</CardContent>
+					</Card>
+				</Box>
 			</Box>
-		</Box>
+		</>
 	);
 };

@@ -4,6 +4,7 @@ from .profile import router as profile_router
 from .reports import router as reports_router
 from .trainings import router as trainings_router
 from .admin import router as admin_router
+from .weather import router as weather_router
 
 __all__ = [
     "athletes_router",
@@ -11,5 +12,6 @@ __all__ = [
     "nutrition_router",
     "reports_router",
     "profile_router",
-    "admin_router"
+    "admin_router",
+    "weather_router"
 ]
