@@ -58,7 +58,7 @@ async def read_athletes(
         total=total,
         page=page,
         limit=limit,
-        pages=(total + limit - 1)
+        pages=(total + limit - 1) // limit
     )
 
 @router.post("/", response_model=AthleteResponse, status_code=status.HTTP_201_CREATED)
