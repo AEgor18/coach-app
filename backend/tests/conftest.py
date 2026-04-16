@@ -3,7 +3,6 @@ import pytest
 import sys
 from pathlib import Path
 
-# 🔹 ПЕРВЫМ ДЕЛОМ: добавляем backend в sys.path
 backend_root = Path(__file__).parent.parent.resolve()
 if str(backend_root) not in sys.path:
     sys.path.insert(0, str(backend_root))
@@ -16,9 +15,8 @@ from sqlalchemy.pool import StaticPool
 from database import Base, get_db
 from main import app
 from core.security import get_password_hash, create_access_token
-from models.roles import UserRole  # 🔹 ДОБАВЛЕНО: импорт UserRole
+from models.roles import UserRole
 
-# 🔹 Тестовая in-memory БД
 SQLALCHEMY_TEST_DATABASE_URL = "sqlite:///:memory:"
 
 test_engine = create_engine(
@@ -78,13 +76,10 @@ def test_coach(db_session):
     coach = CoachProfile(
         email="test@coach.com",
         hashed_password=get_password_hash("secure123"),
-        # 👇 ОБЯЗАТЕЛЬНЫЕ ПОЛЯ (NOT NULL в БД + валидация схемы):
-        full_name="Тест Тренеров",      # ✅ мин. 1 символ
-        phone="+79990001234",           # ✅ 5-20 символов, формат телефона
-        # 👇 Опциональные поля:
+        full_name="Тест Тренеров",
+        phone="+79990001234",
         is_active=True,
-        role=UserRole.USER,             # ✅ теперь UserRole импортирован
-        # avatar_url по умолчанию None (nullable)
+        role=UserRole.USER,
     )
     db_session.add(coach)
     db_session.commit()
