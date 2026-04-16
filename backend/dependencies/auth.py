@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from core.security import verify_token
 from crud.profile import get_coach_by_email
 from models.roles import UserRole
+from models.profile import CoachProfile
 from database import get_db
 
 security = HTTPBearer()

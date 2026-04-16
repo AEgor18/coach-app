@@ -1,56 +1,99 @@
+import os
+import json
 import boto3
-from botocore.client import Config
-from botocore.exceptions import BotoCoreError, ClientError
-from datetime import datetime, timedelta
+from botocore.config import Config
+from botocore.exceptions import ClientError
 
-from core.config import settings
 
 class S3Storage:
     def __init__(self):
-        session = boto3.session.Session()
-        self.s3 = session.client(
-            "s3",
-            aws_access_key_id=settings.AWS_ACCESS_KEY,
-            aws_secret_access_key=settings.AWS_SECRET_KEY,
-            region_name=settings.AWS_REGION,
-            endpoint_url=settings.AWS_ENDPOINT_URL,
-            config=Config(signature_version="s3v4"),
-        )
-        self.bucket_name = settings.AWS_BUCKET_NAME
+        self.endpoint_url = os.getenv("MINIO_ENDPOINT", "http://minio:9000")
+        self.access_key = os.getenv("MINIO_ACCESS_KEY", "minioadmin")
+        self.secret_key = os.getenv("MINIO_SECRET_KEY", "minioadmin123_change_me")
+        self.bucket_name = os.getenv("MINIO_BUCKET_NAME", "coach-photos")
 
+        self.s3 = boto3.client(
+            's3',
+            endpoint_url=self.endpoint_url,
+            aws_access_key_id=self.access_key,
+            aws_secret_access_key=self.secret_key,
+            config=Config(signature_version='s3v4'),
+            region_name='us-east-1'
+        )
+
+        # Создаём/проверяем бакет
         try:
             self.s3.head_bucket(Bucket=self.bucket_name)
-        except ClientError:
-            self.s3.create_bucket(Bucket=self.bucket_name)
+            print(f"✅ Bucket '{self.bucket_name}' уже существует")
+        except ClientError as e:
+            error_code = e.response['Error']['Code']
+            if error_code == '404':
+                try:
+                    self.s3.create_bucket(Bucket=self.bucket_name)
+                    print(f"✅ Bucket '{self.bucket_name}' успешно создан")
+                except Exception as create_err:
+                    print(f"⚠️ Не удалось создать бакет: {create_err}")
+            else:
+                print(f"⚠️ Ошибка проверки бакета: {e}")
 
-    def upload_file(self, file_bytes: bytes, key: str, content_type: str) -> str:
+        self.make_bucket_public()
+
+    def upload_file(self, file_content: bytes, key: str, content_type: str = "application/octet-stream"):
+        """Загрузка файла в MinIO с публичным доступом"""
         try:
             self.s3.put_object(
                 Bucket=self.bucket_name,
                 Key=key,
-                Body=file_bytes,
+                Body=file_content,
                 ContentType=content_type,
+                ACL='public-read'
             )
-        except (BotoCoreError, ClientError) as e:
-            raise RuntimeError(f"Ошибка загрузки файла: {e}")
-        return key
+            print(f"✅ Uploaded publicly: {key}")
+        except Exception as e:
+            raise Exception(f"Upload failed: {e}")
 
-    def get_presigned_url(self, key: str, expires_in_seconds: int = 3600) -> str:
-        try:
-            url = self.s3.generate_presigned_url(
-                "get_object",
-                Params={"Bucket": self.bucket_name, "Key": key},
-                ExpiresIn=expires_in_seconds,
-            )
-        except (BotoCoreError, ClientError) as e:
-            raise RuntimeError(f"Ошибка генерации URL: {e}")
-        return url
-
-    def delete_file(self, key: str) -> bool:
+    def delete_file(self, key: str):
+        """Удаление файла из MinIO"""
         try:
             self.s3.delete_object(Bucket=self.bucket_name, Key=key)
-        except (BotoCoreError, ClientError) as e:
-            raise RuntimeError(f"Ошибка удаления файла: {e}")
-        return True
+            print(f"✅ Deleted: {key}")
+        except Exception as e:
+            raise Exception(f"Delete failed: {e}")
 
-s3_storage = S3Storage()
+    def get_public_url(self, key: str) -> str:
+        """Возвращает публичную ссылку для браузера"""
+        if not key:
+            return ""
+        public_base = os.getenv("MINIO_PUBLIC_URL", "http://localhost:9000").rstrip('/')
+        return f"{public_base}/{self.bucket_name}/{key}"
+
+    def make_bucket_public(self):
+        """Применяет политику публичного чтения ко всему бакету"""
+        try:
+            policy = {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Principal": "*",
+                        "Action": ["s3:GetObject"],
+                        "Resource": [f"arn:aws:s3:::{self.bucket_name}/*"]
+                    }
+                ]
+            }
+            self.s3.put_bucket_policy(
+                Bucket=self.bucket_name,
+                Policy=json.dumps(policy)
+            )
+            print(f"✅ Bucket '{self.bucket_name}' is now public (policy applied)")
+        except Exception as e:
+            print(f"⚠️ Could not set public policy: {e}")
+
+
+_s3_storage_instance = None
+
+def get_s3_storage():
+    global _s3_storage_instance
+    if _s3_storage_instance is None:
+        _s3_storage_instance = S3Storage()
+    return _s3_storage_instance

@@ -23,7 +23,7 @@ from schemas.profile import (
 )
 from crud.refresh_token import save_refresh_token, get_refresh_token, revoke_refresh_token
 from core.config import settings
-from core.s3 import s3_storage
+from core.s3 import get_s3_storage
 
 router = APIRouter(prefix="/api/profile", tags=["Coach Profile"])
 
@@ -88,7 +88,8 @@ async def get_current_coach_profile(
     coach: CoachProfile = Depends(get_current_coach),
 ):
     if coach.avatar_url:
-        coach.avatar_url = s3_storage.get_presigned_url(coach.avatar_url)
+        s3 = get_s3_storage()
+        coach.avatar_url = s3.get_public_url(coach.avatar_url)
 
     return coach
 
@@ -128,12 +129,12 @@ async def upload_avatar(
     key = f"avatars/{coach.id}_{file.filename}"
 
     try:
-        s3_storage.upload_file(contents, key, file.content_type)
+        s3 = get_s3_storage()
+        s3.upload_file(contents, key, file.content_type)
     except Exception as e:
-        raise HTTPException(500, detail=f"S3 upload error: {e}")
+        raise HTTPException(500, detail=f"S3 upload error: {str(e)}")
 
     coach.avatar_url = key
-
     db.commit()
     db.refresh(coach)
 
@@ -148,9 +149,10 @@ async def delete_avatar(
         raise HTTPException(404, detail="Avatar not found")
 
     try:
-        s3_storage.delete_file(coach.avatar_url)
+        s3 = get_s3_storage()
+        s3.delete_file(coach.avatar_url)
     except Exception as e:
-        raise HTTPException(500, detail=f"S3 delete error: {e}")
+        raise HTTPException(500, detail=f"S3 delete error: {str(e)}")
 
     coach.avatar_url = None
     db.commit()

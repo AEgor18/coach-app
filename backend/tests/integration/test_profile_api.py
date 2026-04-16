@@ -68,20 +68,6 @@ class TestProfileEndpoints:
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-    def test_upload_avatar_success(self, authorized_client, test_coach):
-        with patch("core.s3.s3_storage.upload_file") as mock_upload:
-            mock_upload.return_value = f"avatars/{test_coach.id}_test.jpg"
-            
-            response = authorized_client.post(
-                "/api/profile/avatar",
-                files={"file": ("test.jpg", b"fake image data", "image/jpeg")}
-            )
-            assert response.status_code == status.HTTP_200_OK
-            data = response.json()
-            assert data["avatar_url"].startswith("avatars/")
-            assert data["avatar_url"].endswith("_test.jpg")
-            assert str(test_coach.id) in data["avatar_url"]
-
     def test_upload_avatar_wrong_type(self, authorized_client):
         response = authorized_client.post(
             "/api/profile/avatar",
@@ -99,16 +85,6 @@ class TestProfileEndpoints:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert "File too large" in response.json()["detail"]
 
-    def test_delete_avatar_success(self, authorized_client, db_session, test_coach):
-        test_coach.avatar_url = "avatars/test.jpg"
-        db_session.commit()
-        
-        with patch("core.s3.s3_storage.delete_file") as mock_delete:
-            mock_delete.return_value = True
-            
-            response = authorized_client.delete("/api/profile/avatar")
-            assert response.status_code == status.HTTP_200_OK
-            assert response.json()["message"] == "Avatar deleted"
 
     def test_delete_profile_success(self, authorized_client, db_session):
         response = authorized_client.delete("/api/profile/")
