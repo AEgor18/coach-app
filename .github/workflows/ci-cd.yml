@@ -57,8 +57,6 @@ jobs:
                     --health-interval=10s
                     --health-timeout=5s
                     --health-retries=5
-                volumes:
-                    - /tmp/minio:/data
                 command: server /data --console-address ":9001"
 
         steps:
@@ -75,12 +73,13 @@ jobs:
                   python -m pip install --upgrade pip
                   pip install poetry
                   cd backend
-                  poetry install --with dev --no-interaction --no-root
+                  poetry install --no-interaction --no-root
+                  pip install pytest httpx
 
             - name: Run backend tests
               run: |
                   cd backend
-                  poetry run pytest -v
+                  pytest -v
 
     frontend-tests:
         name: Frontend Tests
