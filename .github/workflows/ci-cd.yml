@@ -75,12 +75,13 @@ jobs:
                   python -m pip install --upgrade pip
                   pip install poetry
                   cd backend
-                  poetry install --no-root
+                  poetry install --no-root --no-interaction
+                  poetry run pip install pytest
 
             - name: Run backend tests
               run: |
                   cd backend
-                  pytest -v
+                  poetry run pytest -v
 
     frontend-tests:
         name: Frontend Tests
