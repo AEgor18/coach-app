@@ -7,3 +7,5 @@ authors = ["aegor"]
 [tool.poetry.dependencies]
 python = "^3.12"
 fastapi = "*"
+pytest = "^8.0.0"
+httpx = "^0.28.0"
