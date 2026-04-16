@@ -1,7 +1,7 @@
 from typing import List, Optional, Tuple
 
-from sqlalchemy.orm import Session
 from sqlalchemy import asc, desc
+from sqlalchemy.orm import Session
 
 from models.athletes import Athlete, AthleteStatus, SportType
 from schemas.athletes import AthleteCreate, AthleteUpdate
@@ -19,7 +19,7 @@ def get_athletes(
     sort_order: str = "asc",
     page: int = 1,
     limit: int = 10,
-) -> Tuple[List[Athlete], int]: 
+) -> Tuple[List[Athlete], int]:
 
     query = db.query(Athlete).filter(Athlete.coach_id == coach_id)
 
@@ -95,9 +95,7 @@ def update_athlete(
     return db_athlete
 
 
-def update_athlete_status(
-    db: Session, athlete_id: int, status: AthleteStatus
-) -> Optional[Athlete]:
+def update_athlete_status(db: Session, athlete_id: int, status: AthleteStatus) -> Optional[Athlete]:
 
     db_athlete = db.query(Athlete).filter(Athlete.id == athlete_id).first()
 

@@ -1,6 +1,7 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Response
 from fastapi.responses import PlainTextResponse
-from datetime import datetime
 
 from core.config import settings
 
@@ -10,6 +11,7 @@ PUBLIC_PAGES = [
     {"loc": "/", "priority": "1.0", "changefreq": "daily"},
     {"loc": "/auth", "priority": "0.8", "changefreq": "monthly"},
 ]
+
 
 def get_base_url() -> str:
     """Безопасное получение BASE_URL"""
@@ -23,18 +25,20 @@ async def get_sitemap():
     urlset = []
 
     for page in PUBLIC_PAGES:
-        urlset.append(f"""
+        urlset.append(
+            f"""
     <url>
-        <loc>{base_url}{page['loc']}</loc>
-        <lastmod>{datetime.now().strftime('%Y-%m-%d')}</lastmod>
-        <changefreq>{page['changefreq']}</changefreq>
-        <priority>{page['priority']}</priority>
+        <loc>{base_url}{page["loc"]}</loc>
+        <lastmod>{datetime.now().strftime("%Y-%m-%d")}</lastmod>
+        <changefreq>{page["changefreq"]}</changefreq>
+        <priority>{page["priority"]}</priority>
     </url>
-        """.strip())
+        """.strip()
+        )
 
     xml_content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-{''.join(urlset)}
+{"".join(urlset)}
 </urlset>"""
 
     return Response(content=xml_content, media_type="application/xml")
@@ -44,7 +48,7 @@ async def get_sitemap():
 async def get_robots():
     """Улучшенный robots.txt"""
     base_url = get_base_url()
-    
+
     content = f"""User-agent: *
 Allow: /
 Disallow: /api/
@@ -61,7 +65,6 @@ Sitemap: {base_url}/sitemap.xml
     return content
 
 
-
 @seo_router.get("/json-ld")
 async def get_json_ld():
     base_url = get_base_url()
@@ -73,7 +76,4 @@ async def get_json_ld():
         "description": "Управление тренировками и спортсменами для тренеров",
         "logo": f"{base_url}/logo.png",
     }
-    return Response(
-        content=str(json_ld).replace("'", '"'),
-        media_type="application/ld+json"
-    )
+    return Response(content=str(json_ld).replace("'", '"'), media_type="application/ld+json")

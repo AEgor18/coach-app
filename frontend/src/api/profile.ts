@@ -1,14 +1,14 @@
 import { fetchWithAuth } from './fetchWithAuth';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = '';
 
 export const registerUser = async (data: any) => {
-	const url = `${API_BASE_URL}/api/profile/register`;
+	const url = `/api/profile/register`;
 	const res = await fetch(url, {
 		method: 'POST',
 		headers: {
-			Accept: 'application/json',
 			'Content-Type': 'application/json',
+			Accept: 'application/json',
 		},
 		body: JSON.stringify(data),
 	});
@@ -22,12 +22,12 @@ export const registerUser = async (data: any) => {
 };
 
 export const loginUser = async (data: any) => {
-	const url = `${API_BASE_URL}/api/profile/login`;
+	const url = `/api/profile/login`;
 	const res = await fetch(url, {
 		method: 'POST',
 		headers: {
-			Accept: 'application/json',
 			'Content-Type': 'application/json',
+			Accept: 'application/json',
 		},
 		body: JSON.stringify(data),
 	});

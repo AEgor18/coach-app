@@ -432,13 +432,6 @@ export const AuthPage = () => {
 									aria-labelledby='register-form-title'
 									id='register-panel'
 								>
-									<Typography
-										id='register-form-title'
-										sx={{ srOnly: true }}
-									>
-										Форма регистрации нового тренера
-									</Typography>
-
 									<TextField
 										fullWidth
 										label='ФИО'

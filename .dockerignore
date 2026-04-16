@@ -1,0 +1,12 @@
+**/.git
+**/.env
+**/.venv
+**/node_modules
+**/__pycache__
+**/.pytest_cache
+**/*.pyc
+**/dist
+**/build
+**/.next
+**/.nuxt
+nginx/logs

@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = '';
 
 let isRefreshing = false;
 let refreshSubscribers: Array<(token: string) => void> = [];
@@ -72,6 +72,16 @@ export const fetchWithAuth = async (
 ): Promise<Response> => {
 	const refresh_token = localStorage.getItem('refresh_token');
 	let token = localStorage.getItem('access_token');
+	const publicEndpoints = [
+		'/api/profile/login',
+		'/api/profile/register',
+		'/api/profile/refresh',
+	];
+	const isPublic = publicEndpoints.some((ep) => url.includes(ep));
+
+	if (isPublic) {
+		token = null;
+	}
 
 	if (!token && refresh_token && retry) {
 		try {

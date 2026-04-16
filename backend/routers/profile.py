@@ -1,8 +1,10 @@
-import os
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
-from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from sqlalchemy.orm import Session
+
+from core.config import settings
+from core.s3 import get_s3_storage
 from core.security import create_access_token, create_refresh_token, verify_token
 from crud.profile import (
     authenticate_coach,
@@ -10,6 +12,7 @@ from crud.profile import (
     delete_coach_profile,
     update_coach_profile,
 )
+from crud.refresh_token import get_refresh_token, revoke_refresh_token, save_refresh_token
 from database import get_db
 from dependencies.auth import get_current_coach
 from models.profile import CoachProfile
@@ -18,12 +21,9 @@ from schemas.profile import (
     CoachProfileResponse,
     CoachProfileUpdate,
     LoginRequest,
+    RefreshRequest,
     Token,
-    RefreshRequest
 )
-from crud.refresh_token import save_refresh_token, get_refresh_token, revoke_refresh_token
-from core.config import settings
-from core.s3 import get_s3_storage
 
 router = APIRouter(prefix="/api/profile", tags=["Coach Profile"])
 
@@ -34,6 +34,7 @@ async def register_coach(profile: CoachProfileCreate, db: Session = Depends(get_
         return create_coach_profile(db=db, profile=profile)
     except ValueError as e:
         raise HTTPException(400, detail=str(e))
+
 
 @router.post("/login", response_model=Token)
 async def login_coach(login_data: LoginRequest, db: Session = Depends(get_db)):
@@ -52,6 +53,7 @@ async def login_coach(login_data: LoginRequest, db: Session = Depends(get_db)):
         "refresh_token": refresh_token,
         "token_type": "bearer",
     }
+
 
 @router.post("/refresh", response_model=Token)
 async def refresh_token_endpoint(request: RefreshRequest, db: Session = Depends(get_db)):
@@ -78,10 +80,12 @@ async def refresh_token_endpoint(request: RefreshRequest, db: Session = Depends(
         "token_type": "bearer",
     }
 
+
 @router.post("/logout")
 async def logout(refresh_token: str, db: Session = Depends(get_db)):
     revoke_refresh_token(db, refresh_token)
     return {"message": "Logged out"}
+
 
 @router.get("/me", response_model=CoachProfileResponse)
 async def get_current_coach_profile(
@@ -92,6 +96,7 @@ async def get_current_coach_profile(
         coach.avatar_url = s3.get_public_url(coach.avatar_url)
 
     return coach
+
 
 @router.put("/", response_model=CoachProfileResponse)
 async def update_coach_profile_data(
@@ -104,6 +109,7 @@ async def update_coach_profile_data(
         raise HTTPException(404, detail="Coach not found")
     return updated
 
+
 @router.delete("/", status_code=204)
 async def delete_coach_profile_endpoint(
     db: Session = Depends(get_db), coach: CoachProfile = Depends(get_current_coach)
@@ -112,6 +118,7 @@ async def delete_coach_profile_endpoint(
     if not deleted:
         raise HTTPException(404, detail="Coach not found")
     return None
+
 
 @router.post("/avatar", response_model=CoachProfileResponse)
 async def upload_avatar(
@@ -139,6 +146,7 @@ async def upload_avatar(
     db.refresh(coach)
 
     return coach
+
 
 @router.delete("/avatar")
 async def delete_avatar(

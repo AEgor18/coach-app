@@ -1,22 +1,20 @@
 import httpx
-from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
 from fastapi import HTTPException
 from pydantic import BaseModel
-from typing import Optional
-from datetime import datetime
-import asyncio
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
 
 from core.config import settings
 
+
 class WeatherData(BaseModel):
     city: str
-    temperature: float         
+    temperature: float
     feels_like: float
     humidity: int
     wind_speed: float
     description: str
-    icon: str                   
-    recommendation: str        
+    icon: str
+    recommendation: str
 
 
 class WeatherService:
@@ -28,19 +26,14 @@ class WeatherService:
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_fixed(2),
-        retry=retry_if_exception_type((httpx.TimeoutException, httpx.ConnectError))
+        retry=retry_if_exception_type((httpx.TimeoutException, httpx.ConnectError)),
     )
     async def get_current_weather(self, city: str = "Moscow") -> WeatherData:
         if not self.api_key:
             raise HTTPException(status_code=503, detail="Weather service not configured")
 
         url = f"{self.base_url}/weather"
-        params = {
-            "q": city,
-            "appid": self.api_key,
-            "units": "metric",
-            "lang": "ru"         
-        }
+        params = {"q": city, "appid": self.api_key, "units": "metric", "lang": "ru"}
 
         try:
             response = await self.client.get(url, params=params)
@@ -55,7 +48,9 @@ class WeatherService:
                 wind_speed=round(data["wind"]["speed"], 1),
                 description=data["weather"][0]["description"].capitalize(),
                 icon=data["weather"][0]["icon"],
-                recommendation=self._get_training_recommendation(data["main"]["temp"], data["weather"][0]["main"])
+                recommendation=self._get_training_recommendation(
+                    data["main"]["temp"], data["weather"][0]["main"]
+                ),
             )
             return weather
 

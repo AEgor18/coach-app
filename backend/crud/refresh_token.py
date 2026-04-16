@@ -1,11 +1,11 @@
 from datetime import datetime
+
 from sqlalchemy.orm import Session
+
 from models.refresh_token import RefreshToken
 
 
-def save_refresh_token(
-    db: Session, token: str, email: str, expires_at: datetime
-):
+def save_refresh_token(db: Session, token: str, email: str, expires_at: datetime):
     db_token = RefreshToken(
         token=token,
         email=email,

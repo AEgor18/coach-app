@@ -1,4 +1,5 @@
 from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -18,12 +19,14 @@ from schemas.trainings import TrainingPlanCreate, TrainingPlanResponse, Training
 
 router = APIRouter(prefix="/api/trainings", tags=["Trainings"])
 
+
 @router.get("/plans", response_model=List[TrainingPlanResponse])
 async def read_training_plans(
     db: Session = Depends(get_db), coach: CoachProfile = Depends(get_current_coach)
 ):
     """Получить все планы тренировок"""
     return get_training_plans(db, coach_id=coach.id)
+
 
 @router.post("/plans", response_model=TrainingPlanResponse, status_code=status.HTTP_201_CREATED)
 async def create_new_training_plan(
@@ -33,6 +36,7 @@ async def create_new_training_plan(
 ):
     """Создать новый план тренировки"""
     return create_training_plan(db, plan=plan, coach_id=coach.id)
+
 
 @router.get("/plans/{plan_id}", response_model=TrainingPlanResponse)
 async def read_training_plan(
@@ -45,6 +49,7 @@ async def read_training_plan(
     if not db_plan or db_plan.coach_id != coach.id:
         raise HTTPException(status_code=404, detail="Training plan not found")
     return db_plan
+
 
 @router.put("/plans/{plan_id}", response_model=TrainingPlanResponse)
 async def update_training_plan_data(
@@ -59,6 +64,7 @@ async def update_training_plan_data(
         raise HTTPException(status_code=404, detail="Training plan not found")
     return db_plan
 
+
 @router.patch("/plans/{plan_id}/status", response_model=TrainingPlanResponse)
 async def update_training_status_endpoint(
     plan_id: int,
@@ -71,6 +77,7 @@ async def update_training_status_endpoint(
     if not db_plan or db_plan.coach_id != coach.id:
         raise HTTPException(status_code=404, detail="Training plan not found")
     return db_plan
+
 
 @router.delete("/plans/{plan_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_training_plan_endpoint(

@@ -28,7 +28,7 @@ def create_training_plan(db: Session, plan: TrainingPlanCreate, coach_id: int) -
         skill_level=plan.skill_level,
         description=plan.description or "",
         athletes=athletes,
-        coach_id=coach_id
+        coach_id=coach_id,
     )
     db.add(db_plan)
     db.commit()

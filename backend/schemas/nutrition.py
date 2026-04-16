@@ -7,9 +7,7 @@ from schemas.athletes import AthleteSimpleResponse
 
 
 class NutritionPlanBase(BaseModel):
-    title: str = Field(
-        ..., min_length=1, max_length=100, description="Название плана питания"
-    )
+    title: str = Field(..., min_length=1, max_length=100, description="Название плана питания")
     nutrition_type: NutritionType
     calories: int = Field(..., ge=1, le=10000, description="Калорийность в ккал")
     protein: int = Field(..., ge=1, le=500, description="Белки в граммах")

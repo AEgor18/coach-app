@@ -1,12 +1,12 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from core.security import verify_token
 from crud.profile import get_coach_by_email
-from models.roles import UserRole
-from models.profile import CoachProfile
 from database import get_db
+from models.profile import CoachProfile
+from models.roles import UserRole
 
 security = HTTPBearer()
 
@@ -31,6 +31,7 @@ async def get_current_coach(
         raise HTTPException(status_code=400, detail="Inactive coach")
 
     return coach
+
 
 async def get_current_admin(
     coach: CoachProfile = Depends(get_current_coach),

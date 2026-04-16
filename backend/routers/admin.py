@@ -1,6 +1,7 @@
+from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List
 
 from database import get_db
 from dependencies.auth import get_current_admin
@@ -17,6 +18,7 @@ async def get_all_coaches(
     admin: CoachProfile = Depends(get_current_admin),
 ):
     return db.query(CoachProfile).all()
+
 
 @router.patch("/promote/{user_id}", response_model=CoachProfileResponse)
 async def promote_user(

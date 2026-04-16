@@ -1,4 +1,5 @@
-from sqlalchemy import Boolean, Column, Integer, String, Enum
+from sqlalchemy import Boolean, Column, Enum, Integer, String
+
 from database import Base
 from models.roles import UserRole
 

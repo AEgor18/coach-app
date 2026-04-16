@@ -1,11 +1,12 @@
 import re
-from typing import Optional, Generic, TypeVar, List
+from typing import Generic, List, Optional, TypeVar
 
 from pydantic import BaseModel, Field, validator
 
 from models.athletes import AthleteStatus, SportType
 
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 class AthleteBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100, description="Имя спортсмена")
@@ -33,20 +34,12 @@ class AthleteCreate(AthleteBase):
 
 
 class AthleteUpdate(BaseModel):
-    name: Optional[str] = Field(
-        None, min_length=1, max_length=100, description="Имя спортсмена"
-    )
+    name: Optional[str] = Field(None, min_length=1, max_length=100, description="Имя спортсмена")
     status: Optional[AthleteStatus] = None
     sport_type: Optional[SportType] = None
-    age: Optional[int] = Field(
-        None, ge=1, le=120, description="Возраст от 1 до 120 лет"
-    )
-    phone: Optional[str] = Field(
-        None, min_length=5, max_length=20, description="Номер телефона"
-    )
-    progress: Optional[int] = Field(
-        None, ge=0, le=100, description="Прогресс от 0 до 100%"
-    )
+    age: Optional[int] = Field(None, ge=1, le=120, description="Возраст от 1 до 120 лет")
+    phone: Optional[str] = Field(None, min_length=5, max_length=20, description="Номер телефона")
+    progress: Optional[int] = Field(None, ge=0, le=100, description="Прогресс от 0 до 100%")
 
     @validator("phone")
     def validate_phone(cls, v):
@@ -86,11 +79,12 @@ class AthleteSimpleResponse(BaseModel):
 
 class PaginatedResponse(BaseModel, Generic[T]):
     """Универсальная схема для пагинированных ответов"""
+
     data: List[T]
     total: int
     page: int
     limit: int
     pages: int
-    
+
     class Config:
         from_attributes = True

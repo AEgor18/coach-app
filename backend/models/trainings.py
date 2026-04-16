@@ -1,8 +1,7 @@
 from enum import Enum
 
-from sqlalchemy import Column, Date
+from sqlalchemy import Column, Date, ForeignKey, Integer, String, Table, Text
 from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import ForeignKey, Integer, String, Table, Text
 from sqlalchemy.orm import relationship
 
 from database import Base
@@ -50,6 +49,4 @@ class TrainingPlan(Base):
     coach_id = Column(Integer, ForeignKey("coach_profile.id"), nullable=False)
     coach = relationship("CoachProfile", backref="training_plans")
 
-    athletes = relationship(
-        "Athlete", secondary=training_athletes, back_populates="training_plans"
-    )
+    athletes = relationship("Athlete", secondary=training_athletes, back_populates="training_plans")

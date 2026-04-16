@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -20,11 +20,11 @@ from schemas.athletes import (
     AthleteResponse,
     AthleteStatusUpdate,
     AthleteUpdate,
-    PaginatedResponse
+    PaginatedResponse,
 )
 
-
 router = APIRouter(prefix="/api/athletes", tags=["Athletes"])
+
 
 @router.get("/", response_model=PaginatedResponse[AthleteResponse])
 async def read_athletes(
@@ -54,12 +54,9 @@ async def read_athletes(
         limit=limit,
     )
     return PaginatedResponse(
-        data=athletes,
-        total=total,
-        page=page,
-        limit=limit,
-        pages=(total + limit - 1) // limit
+        data=athletes, total=total, page=page, limit=limit, pages=(total + limit - 1) // limit
     )
+
 
 @router.post("/", response_model=AthleteResponse, status_code=status.HTTP_201_CREATED)
 async def create_new_athlete(
@@ -80,9 +77,7 @@ async def read_athlete(
     """Получить спортсмена по ID"""
     db_athlete = get_athlete(db, athlete_id=athlete_id)
     if db_athlete is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Athlete not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Athlete not found")
     return db_athlete
 
 
@@ -94,13 +89,9 @@ async def update_athlete_data(
     coach: CoachProfile = Depends(get_current_coach),
 ):
     """Обновить данные спортсмена"""
-    db_athlete = update_athlete(
-        db, athlete_id=athlete_id, athlete_update=athlete_update
-    )
+    db_athlete = update_athlete(db, athlete_id=athlete_id, athlete_update=athlete_update)
     if db_athlete is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Athlete not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Athlete not found")
     return db_athlete
 
 
@@ -112,13 +103,9 @@ async def update_athlete_status_endpoint(
     coach: CoachProfile = Depends(get_current_coach),
 ):
     """Обновить статус атлета"""
-    db_athlete = update_athlete_status(
-        db, athlete_id=athlete_id, status=status_update.status
-    )
+    db_athlete = update_athlete_status(db, athlete_id=athlete_id, status=status_update.status)
     if db_athlete is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Athlete not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Athlete not found")
     return db_athlete
 
 
@@ -131,7 +118,5 @@ async def delete_athlete_endpoint(
     """Удалить спортсмена"""
     success = delete_athlete(db, athlete_id=athlete_id)
     if not success:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Athlete not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Athlete not found")
     return None

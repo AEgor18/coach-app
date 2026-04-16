@@ -1,7 +1,8 @@
 # backend/tests/conftest.py
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 
 backend_root = Path(__file__).parent.parent.resolve()
 if str(backend_root) not in sys.path:
@@ -12,9 +13,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from core.security import create_access_token, get_password_hash
 from database import Base, get_db
 from main import app
-from core.security import get_password_hash, create_access_token
 from models.roles import UserRole
 
 SQLALCHEMY_TEST_DATABASE_URL = "sqlite:///:memory:"
@@ -24,9 +25,7 @@ test_engine = create_engine(
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
-TestingSessionLocal = sessionmaker(
-    autocommit=False, autoflush=False, bind=test_engine
-)
+TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -43,9 +42,9 @@ def db_session():
     connection = test_engine.connect()
     transaction = connection.begin()
     session = TestingSessionLocal(bind=connection)
-    
+
     yield session
-    
+
     session.close()
     transaction.rollback()
     connection.close()
@@ -54,17 +53,18 @@ def db_session():
 @pytest.fixture
 def client(db_session):
     """TestClient с переопределением зависимости get_db"""
+
     def override_get_db():
         try:
             yield db_session
         finally:
             pass
-    
+
     app.dependency_overrides[get_db] = override_get_db
-    
+
     with TestClient(app) as test_client:
         yield test_client
-    
+
     app.dependency_overrides.clear()
 
 
@@ -72,7 +72,7 @@ def client(db_session):
 def test_coach(db_session):
     """Фикстура тестового тренера с ВСЕМИ обязательными полями"""
     from models.profile import CoachProfile
-    
+
     coach = CoachProfile(
         email="test@coach.com",
         hashed_password=get_password_hash("secure123"),
@@ -96,16 +96,15 @@ def auth_token(test_coach):
 @pytest.fixture
 def authorized_client(client, auth_token):
     """Клиент с автоматически подставленным токеном"""
-    client.headers = {
-        **client.headers,
-        "Authorization": f"Bearer {auth_token}"
-    }
+    client.headers = {**client.headers, "Authorization": f"Bearer {auth_token}"}
     return client
+
 
 @pytest.fixture
 def admin_coach(db_session):
     """Фикстура тренера с ролью ADMIN"""
     from models.profile import CoachProfile
+
     coach = CoachProfile(
         email="admin@coach.com",
         hashed_password=get_password_hash("admin123"),
@@ -132,10 +131,12 @@ def admin_client(client, admin_token):
     client.headers = {**client.headers, "Authorization": f"Bearer {admin_token}"}
     return client
 
+
 @pytest.fixture(autouse=True)
 def clean_refresh_tokens(db_session):
     """Очистка токенов перед каждым тестом"""
     from models.refresh_token import RefreshToken
+
     db_session.query(RefreshToken).delete()
     db_session.commit()
     yield
