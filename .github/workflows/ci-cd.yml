@@ -135,25 +135,25 @@ jobs:
 
         steps:
             - name: Checkout repository
-                uses: actions/checkout@v4
+              uses: actions/checkout@v4
 
             - name: Create .env file from secrets
-                run: |
-                    echo -e "${{ secrets.MAIN_ENV }}" > .env
-                    echo "✅ .env created with $(wc -l < .env) variables"
+              run: |
+                  echo -e "${{ secrets.MAIN_ENV }}" > .env
+                  echo "✅ .env created with $(wc -l < .env) variables"
 
             - name: Build images
-                run: docker compose -f docker-compose.yml build
+              run: docker compose -f docker-compose.yml build
 
             - name: Stop previous services
-                run: docker compose -f docker-compose.yml down --remove-orphans
-                continue-on-error: true
+              run: docker compose -f docker-compose.yml down --remove-orphans
+              continue-on-error: true
 
             - name: Run services
-                run: docker compose -f docker-compose.yml up -d --remove-orphans
+              run: docker compose -f docker-compose.yml up -d --remove-orphans
 
             - name: Health check
-                run: |
-                    echo "Waiting 10 seconds for services to start..."
-                    sleep 10
-                    echo "Deploy finished!"
+              run: |
+                  echo "Waiting 10 seconds for services to start..."
+                  sleep 10
+                  echo "✅ Deploy finished!"
