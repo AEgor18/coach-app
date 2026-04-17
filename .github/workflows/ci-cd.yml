@@ -73,7 +73,8 @@ jobs:
                   python -m pip install --upgrade pip
                   pip install poetry
                   cd backend
-                  poetry install --no-interaction --no-root
+                  poetry config virtualenvs.create false
+                  poetry install --no-interaction --with dev
 
             - name: Run backend tests
               run: |
