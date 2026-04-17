@@ -52,3 +52,8 @@ ignore = ["E501"]
 [tool.ruff.lint.isort]
 known-first-party = ["core", "crud", "models", "schemas", "api", "tests"]
 lines-after-imports = 2
+
+[tool.ruff.format]
+line-ending = "lf"
+quote-style = "double"
+indent-style = "space"
