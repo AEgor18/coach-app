@@ -3,11 +3,18 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from crud.reports import create_report, delete_report, get_report, get_reports, update_report
+from crud.reports import (
+    create_report,
+    delete_report,
+    get_report,
+    get_reports,
+    update_report,
+)
 from database import get_db
 from dependencies.auth import get_current_coach
 from models.profile import CoachProfile
 from schemas.reports import ReportCreate, ReportResponse, ReportUpdate
+
 
 router = APIRouter(prefix="/api/reports", tags=["Reports"])
 

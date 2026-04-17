@@ -35,7 +35,13 @@ class TestAthletesEndpoints:
         assert "id" in data
 
     def test_create_athlete_validation_error(self, authorized_client):
-        payload = {"name": "", "sport_type": "Йога", "age": 25, "phone": "12345", "progress": 0}
+        payload = {
+            "name": "",
+            "sport_type": "Йога",
+            "age": 25,
+            "phone": "12345",
+            "progress": 0,
+        }
         response = authorized_client.post("/api/athletes/", json=payload)
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
         assert "detail" in response.json()
@@ -97,7 +103,11 @@ class TestAthletesEndpoints:
         create_athlete(
             db_session,
             AthleteCreate(
-                name="Чужой", sport_type=SportType.RUNNING, age=25, phone="+79990003003", progress=0
+                name="Чужой",
+                sport_type=SportType.RUNNING,
+                age=25,
+                phone="+79990003003",
+                progress=0,
             ),
             coach_id=999,
         )

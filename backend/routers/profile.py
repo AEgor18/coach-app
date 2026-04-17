@@ -12,7 +12,11 @@ from crud.profile import (
     delete_coach_profile,
     update_coach_profile,
 )
-from crud.refresh_token import get_refresh_token, revoke_refresh_token, save_refresh_token
+from crud.refresh_token import (
+    get_refresh_token,
+    revoke_refresh_token,
+    save_refresh_token,
+)
 from database import get_db
 from dependencies.auth import get_current_coach
 from models.profile import CoachProfile
@@ -24,6 +28,7 @@ from schemas.profile import (
     RefreshRequest,
     Token,
 )
+
 
 router = APIRouter(prefix="/api/profile", tags=["Coach Profile"])
 
@@ -46,7 +51,9 @@ async def login_coach(login_data: LoginRequest, db: Session = Depends(get_db)):
     refresh_token = create_refresh_token({"sub": coach.email})
 
     expires_at = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-    save_refresh_token(db=db, token=refresh_token, email=coach.email, expires_at=expires_at)
+    save_refresh_token(
+        db=db, token=refresh_token, email=coach.email, expires_at=expires_at
+    )
 
     return {
         "access_token": access_token,
@@ -56,7 +63,9 @@ async def login_coach(login_data: LoginRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/refresh", response_model=Token)
-async def refresh_token_endpoint(request: RefreshRequest, db: Session = Depends(get_db)):
+async def refresh_token_endpoint(
+    request: RefreshRequest, db: Session = Depends(get_db)
+):
     refresh_token = request.refresh_token
     payload = verify_token(refresh_token)
     if not payload or payload.get("type") != "refresh":
@@ -72,7 +81,9 @@ async def refresh_token_endpoint(request: RefreshRequest, db: Session = Depends(
     new_access = create_access_token({"sub": payload["sub"]})
 
     expires_at = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-    save_refresh_token(db=db, token=new_refresh, email=payload["sub"], expires_at=expires_at)
+    save_refresh_token(
+        db=db, token=new_refresh, email=payload["sub"], expires_at=expires_at
+    )
 
     return {
         "access_token": new_access,

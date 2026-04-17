@@ -35,7 +35,9 @@ def create_report(db: Session, report: ReportCreate, coach_id: int) -> Report:
     return db_report
 
 
-def update_report(db: Session, report_id: int, report_update: ReportUpdate) -> Optional[Report]:
+def update_report(
+    db: Session, report_id: int, report_update: ReportUpdate
+) -> Optional[Report]:
     """Обновить отчет"""
     db_report = db.query(Report).filter(Report.id == report_id).first()
     if not db_report:

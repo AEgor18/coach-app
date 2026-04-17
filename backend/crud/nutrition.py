@@ -16,7 +16,9 @@ def get_nutrition_plan(db: Session, plan_id: int) -> Optional[NutritionPlan]:
     return db.query(NutritionPlan).filter(NutritionPlan.id == plan_id).first()
 
 
-def create_nutrition_plan(db: Session, plan: NutritionPlanCreate, coach_id: int) -> NutritionPlan:
+def create_nutrition_plan(
+    db: Session, plan: NutritionPlanCreate, coach_id: int
+) -> NutritionPlan:
     athletes = db.query(Athlete).filter(Athlete.id.in_(plan.athlete_ids)).all()
 
     db_plan = NutritionPlan(

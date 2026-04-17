@@ -30,7 +30,9 @@ class TestProfileCRUD:
         assert result.email == "admin@test.com"
         assert result.hashed_password != "SecurePass123!"
 
-    def test_create_coach_subsequent_user_is_regular(self, db_session: Session, test_coach):
+    def test_create_coach_subsequent_user_is_regular(
+        self, db_session: Session, test_coach
+    ):
         profile_data = CoachProfileCreate(
             full_name="Обычный Тренер",
             phone="+79990002222",
@@ -101,7 +103,7 @@ class TestProfileCRUD:
     def test_password_truncation_72_chars(self, db_session: Session):
         long_password = "A" * 72
 
-        profile = create_coach_profile(
+        create_coach_profile(
             db_session,
             CoachProfileCreate(
                 full_name="LongPass",
@@ -114,7 +116,9 @@ class TestProfileCRUD:
         result = authenticate_coach(db_session, "long@test.com", long_password)
         assert result is not None
 
-    def test_update_coach_profile_password_hashing(self, db_session: Session, test_coach):
+    def test_update_coach_profile_password_hashing(
+        self, db_session: Session, test_coach
+    ):
         update_data = CoachProfileUpdate(password="NewSecurePass!")
         result = update_coach_profile(db_session, update_data)
 

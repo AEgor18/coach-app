@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field, validator
 
 from models.athletes import AthleteStatus, SportType
 
+
 T = TypeVar("T")
 
 
@@ -34,12 +35,20 @@ class AthleteCreate(AthleteBase):
 
 
 class AthleteUpdate(BaseModel):
-    name: Optional[str] = Field(None, min_length=1, max_length=100, description="Имя спортсмена")
+    name: Optional[str] = Field(
+        None, min_length=1, max_length=100, description="Имя спортсмена"
+    )
     status: Optional[AthleteStatus] = None
     sport_type: Optional[SportType] = None
-    age: Optional[int] = Field(None, ge=1, le=120, description="Возраст от 1 до 120 лет")
-    phone: Optional[str] = Field(None, min_length=5, max_length=20, description="Номер телефона")
-    progress: Optional[int] = Field(None, ge=0, le=100, description="Прогресс от 0 до 100%")
+    age: Optional[int] = Field(
+        None, ge=1, le=120, description="Возраст от 1 до 120 лет"
+    )
+    phone: Optional[str] = Field(
+        None, min_length=5, max_length=20, description="Номер телефона"
+    )
+    progress: Optional[int] = Field(
+        None, ge=0, le=100, description="Прогресс от 0 до 100%"
+    )
 
     @validator("phone")
     def validate_phone(cls, v):

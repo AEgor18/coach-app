@@ -17,7 +17,9 @@ def get_training_plan(db: Session, plan_id: int) -> Optional[TrainingPlan]:
     return db.query(TrainingPlan).filter(TrainingPlan.id == plan_id).first()
 
 
-def create_training_plan(db: Session, plan: TrainingPlanCreate, coach_id: int) -> TrainingPlan:
+def create_training_plan(
+    db: Session, plan: TrainingPlanCreate, coach_id: int
+) -> TrainingPlan:
     """Создать новый план тренировки"""
     athletes = db.query(Athlete).filter(Athlete.id.in_(plan.athlete_ids)).all()
     db_plan = TrainingPlan(

@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+
 backend_root = Path(__file__).parent.parent.resolve()
 if str(backend_root) not in sys.path:
     sys.path.insert(0, str(backend_root))
@@ -17,6 +18,7 @@ from core.security import create_access_token, get_password_hash
 from database import Base, get_db
 from main import app
 from models.roles import UserRole
+
 
 SQLALCHEMY_TEST_DATABASE_URL = "sqlite:///:memory:"
 

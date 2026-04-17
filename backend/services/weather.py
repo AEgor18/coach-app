@@ -30,7 +30,9 @@ class WeatherService:
     )
     async def get_current_weather(self, city: str = "Moscow") -> WeatherData:
         if not self.api_key:
-            raise HTTPException(status_code=503, detail="Weather service not configured")
+            raise HTTPException(
+                status_code=503, detail="Weather service not configured"
+            )
 
         url = f"{self.base_url}/weather"
         params = {"q": city, "appid": self.api_key, "units": "metric", "lang": "ru"}

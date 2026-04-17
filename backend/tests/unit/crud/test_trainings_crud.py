@@ -45,7 +45,11 @@ class TestTrainingsCRUD:
         athlete = create_athlete(
             db_session,
             AthleteCreate(
-                name="Тест", sport_type=SportType.YOGA, age=20, phone="+79990002002", progress=0
+                name="Тест",
+                sport_type=SportType.YOGA,
+                age=20,
+                phone="+79990002002",
+                progress=0,
             ),
             coach_id=test_coach.id,
         )

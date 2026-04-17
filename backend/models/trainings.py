@@ -6,6 +6,7 @@ from sqlalchemy.orm import relationship
 
 from database import Base
 
+
 training_athletes = Table(
     "training_athletes",
     Base.metadata,
@@ -49,4 +50,6 @@ class TrainingPlan(Base):
     coach_id = Column(Integer, ForeignKey("coach_profile.id"), nullable=False)
     coach = relationship("CoachProfile", backref="training_plans")
 
-    athletes = relationship("Athlete", secondary=training_athletes, back_populates="training_plans")
+    athletes = relationship(
+        "Athlete", secondary=training_athletes, back_populates="training_plans"
+    )

@@ -40,7 +40,10 @@ class S3Storage:
         self.make_bucket_public()
 
     def upload_file(
-        self, file_content: bytes, key: str, content_type: str = "application/octet-stream"
+        self,
+        file_content: bytes,
+        key: str,
+        content_type: str = "application/octet-stream",
     ):
         """Загрузка файла в MinIO с публичным доступом"""
         try:
@@ -84,7 +87,9 @@ class S3Storage:
                     }
                 ],
             }
-            self.s3.put_bucket_policy(Bucket=self.bucket_name, Policy=json.dumps(policy))
+            self.s3.put_bucket_policy(
+                Bucket=self.bucket_name, Policy=json.dumps(policy)
+            )
             print(f"✅ Bucket '{self.bucket_name}' is now public (policy applied)")
         except Exception as e:
             print(f"⚠️ Could not set public policy: {e}")

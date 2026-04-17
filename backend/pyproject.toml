@@ -26,3 +26,29 @@ pytest = "^8.0.0"
 httpx = "^0.28.0"
 pytest-cov = "^4.1.0"
 ruff = "^0.1.0"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+exclude = [
+    ".git",
+    ".venv",
+    "venv",
+    "__pycache__",
+    "*.pyc",
+    ".mypy_cache",
+    ".pytest_cache",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/conftest.py" = ["E402"]
+"backend/tests/**/conftest.py" = ["E402"]
+"__init__.py" = ["F401"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["core", "crud", "models", "schemas", "api", "tests"]
+lines-after-imports = 2

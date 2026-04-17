@@ -6,7 +6,8 @@ from fastapi import status
 class TestAuthEndpoints:
     def test_login_success(self, client, db_session, test_coach):
         response = client.post(
-            "/api/profile/login", json={"email": "test@coach.com", "password": "secure123"}
+            "/api/profile/login",
+            json={"email": "test@coach.com", "password": "secure123"},
         )
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
@@ -16,7 +17,8 @@ class TestAuthEndpoints:
 
     def test_login_wrong_password(self, client):
         response = client.post(
-            "/api/profile/login", json={"email": "test@coach.com", "password": "wrongpass"}
+            "/api/profile/login",
+            json={"email": "test@coach.com", "password": "wrongpass"},
         )
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
@@ -27,7 +29,8 @@ class TestAuthEndpoints:
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
         response = client.post(
-            "/api/profile/login", json={"email": "nobody@test.com", "password": "anypass"}
+            "/api/profile/login",
+            json={"email": "nobody@test.com", "password": "anypass"},
         )
         assert response.status_code in [
             status.HTTP_401_UNAUTHORIZED,
@@ -35,7 +38,9 @@ class TestAuthEndpoints:
         ]
 
     def test_refresh_token_invalid(self, client):
-        response = client.post("/api/profile/refresh", json={"refresh_token": "invalid_token_xyz"})
+        response = client.post(
+            "/api/profile/refresh", json={"refresh_token": "invalid_token_xyz"}
+        )
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
@@ -52,7 +57,9 @@ class TestAuthMiddleware:
         assert "Token missing" in response.json()["detail"]
 
     def test_protected_endpoint_invalid_token(self, client):
-        response = client.get("/api/athletes/", headers={"Authorization": "Bearer invalid_token"})
+        response = client.get(
+            "/api/athletes/", headers={"Authorization": "Bearer invalid_token"}
+        )
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
         assert "Invalid token" in response.json()["detail"]
 
@@ -62,8 +69,13 @@ class TestAuthMiddleware:
 
         from core.config import settings
 
-        payload = {"sub": "test@coach.com", "exp": int(datetime.now().timestamp()) - 100}
+        payload = {
+            "sub": "test@coach.com",
+            "exp": int(datetime.now().timestamp()) - 100,
+        }
         expired = jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
-        response = client.get("/api/athletes/", headers={"Authorization": f"Bearer {expired}"})
+        response = client.get(
+            "/api/athletes/", headers={"Authorization": f"Bearer {expired}"}
+        )
         assert response.status_code == status.HTTP_401_UNAUTHORIZED

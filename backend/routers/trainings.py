@@ -15,7 +15,12 @@ from database import get_db
 from dependencies.auth import get_current_coach
 from models.profile import CoachProfile
 from models.trainings import TrainingStatus
-from schemas.trainings import TrainingPlanCreate, TrainingPlanResponse, TrainingPlanUpdate
+from schemas.trainings import (
+    TrainingPlanCreate,
+    TrainingPlanResponse,
+    TrainingPlanUpdate,
+)
+
 
 router = APIRouter(prefix="/api/trainings", tags=["Trainings"])
 
@@ -28,7 +33,9 @@ async def read_training_plans(
     return get_training_plans(db, coach_id=coach.id)
 
 
-@router.post("/plans", response_model=TrainingPlanResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/plans", response_model=TrainingPlanResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_new_training_plan(
     plan: TrainingPlanCreate,
     db: Session = Depends(get_db),

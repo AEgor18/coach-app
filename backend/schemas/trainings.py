@@ -9,9 +9,13 @@ from schemas.athletes import AthleteSimpleResponse
 
 class TrainingPlanBase(BaseModel):
     date: date_type = Field(..., description="Дата тренировки")
-    title: str = Field(..., min_length=1, max_length=100, description="Название тренировки")
+    title: str = Field(
+        ..., min_length=1, max_length=100, description="Название тренировки"
+    )
     training_type: TrainingType
-    duration: int = Field(..., ge=1, le=480, description="Продолжительность в минутах (1-480)")
+    duration: int = Field(
+        ..., ge=1, le=480, description="Продолжительность в минутах (1-480)"
+    )
     skill_level: SkillLevel
     description: Optional[str] = Field(default="", description="Описание тренировки")
     athlete_ids: List[int] = Field(default=[], description="ID спортсменов")

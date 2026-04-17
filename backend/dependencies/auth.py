@@ -8,6 +8,7 @@ from database import get_db
 from models.profile import CoachProfile
 from models.roles import UserRole
 
+
 security = HTTPBearer()
 
 

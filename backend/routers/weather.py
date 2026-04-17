@@ -4,6 +4,7 @@ from dependencies.auth import get_current_coach
 from models.profile import CoachProfile
 from services.weather import WeatherData, weather_service
 
+
 router = APIRouter(prefix="/api/weather", tags=["Weather"])
 
 
@@ -22,4 +23,6 @@ async def get_current_weather(
     except HTTPException as e:
         raise e
     except Exception:
-        raise HTTPException(status_code=503, detail="Не удалось получить данные о погоде")
+        raise HTTPException(
+            status_code=503, detail="Не удалось получить данные о погоде"
+        )

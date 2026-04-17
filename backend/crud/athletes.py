@@ -95,7 +95,9 @@ def update_athlete(
     return db_athlete
 
 
-def update_athlete_status(db: Session, athlete_id: int, status: AthleteStatus) -> Optional[Athlete]:
+def update_athlete_status(
+    db: Session, athlete_id: int, status: AthleteStatus
+) -> Optional[Athlete]:
 
     db_athlete = db.query(Athlete).filter(Athlete.id == athlete_id).first()
 

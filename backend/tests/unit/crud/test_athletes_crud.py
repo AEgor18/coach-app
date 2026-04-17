@@ -28,7 +28,9 @@ class TestCreateAthlete:
             progress=50,
         )
 
-        result = create_athlete(db=db_session, athlete=athlete_data, coach_id=test_coach.id)
+        result = create_athlete(
+            db=db_session, athlete=athlete_data, coach_id=test_coach.id
+        )
 
         assert result.id is not None
         assert result.name == "Иван Петров"
@@ -50,7 +52,11 @@ class TestCreateAthlete:
     def test_create_athlete_phone_validation_schema(self):
         with pytest.raises(ValidationError) as exc_info:
             AthleteCreate(
-                name="Тест", sport_type=SportType.SWIMMING, age=20, phone="invalid", progress=0
+                name="Тест",
+                sport_type=SportType.SWIMMING,
+                age=20,
+                phone="invalid",
+                progress=0,
             )
 
         assert "phone" in str(exc_info.value).lower()
@@ -58,18 +64,30 @@ class TestCreateAthlete:
     def test_create_athlete_name_validation_empty(self):
         with pytest.raises(ValidationError):
             AthleteCreate(
-                name="   ", sport_type=SportType.YOGA, age=25, phone="+79991234567", progress=0
+                name="   ",
+                sport_type=SportType.YOGA,
+                age=25,
+                phone="+79991234567",
+                progress=0,
             )
 
     def test_create_athlete_age_bounds(self):
         with pytest.raises(ValidationError):
             AthleteCreate(
-                name="Тест", sport_type=SportType.RUNNING, age=0, phone="+79991234567", progress=0
+                name="Тест",
+                sport_type=SportType.RUNNING,
+                age=0,
+                phone="+79991234567",
+                progress=0,
             )
 
         with pytest.raises(ValidationError):
             AthleteCreate(
-                name="Тест", sport_type=SportType.RUNNING, age=121, phone="+79991234567", progress=0
+                name="Тест",
+                sport_type=SportType.RUNNING,
+                age=121,
+                phone="+79991234567",
+                progress=0,
             )
 
     def test_create_athlete_name_trimmed(self, db_session: Session, test_coach):
@@ -153,7 +171,9 @@ class TestGetAthletes:
                 coach_id=test_coach.id,
             )
 
-        athletes, total = get_athletes(db_session, coach_id=test_coach.id, search="Алекс")
+        athletes, total = get_athletes(
+            db_session, coach_id=test_coach.id, search="Алекс"
+        )
 
         assert total == 2
         assert all("Алекс" in a.name for a in athletes)
@@ -185,7 +205,11 @@ class TestGetAthletes:
         create_athlete(
             db_session,
             AthleteCreate(
-                name="Активный", sport_type=SportType.YOGA, age=20, phone=make_phone(30), progress=0
+                name="Активный",
+                sport_type=SportType.YOGA,
+                age=20,
+                phone=make_phone(30),
+                progress=0,
             ),
             coach_id=test_coach.id,
         )
@@ -225,7 +249,9 @@ class TestGetAthletes:
                 coach_id=test_coach.id,
             )
 
-        athletes, total = get_athletes(db_session, coach_id=test_coach.id, min_age=22, max_age=30)
+        athletes, total = get_athletes(
+            db_session, coach_id=test_coach.id, min_age=22, max_age=30
+        )
 
         assert total == 3
         assert all(22 <= a.age <= 30 for a in athletes)
@@ -246,7 +272,9 @@ class TestAthletesPaginationSorting:
                 coach_id=test_coach.id,
             )
 
-        athletes, total = get_athletes(db_session, coach_id=test_coach.id, page=2, limit=5)
+        athletes, total = get_athletes(
+            db_session, coach_id=test_coach.id, page=2, limit=5
+        )
 
         assert total == 15
         assert len(athletes) == 5
@@ -259,7 +287,11 @@ class TestAthletesPaginationSorting:
             create_athlete(
                 db_session,
                 AthleteCreate(
-                    name=name, sport_type=SportType.YOGA, age=25, phone=make_phone(idx), progress=0
+                    name=name,
+                    sport_type=SportType.YOGA,
+                    age=25,
+                    phone=make_phone(idx),
+                    progress=0,
                 ),
                 coach_id=test_coach.id,
             )
@@ -293,7 +325,9 @@ class TestAthletesPaginationSorting:
         result_ages = [a.age for a in athletes]
         assert result_ages == sorted(ages, reverse=True)
 
-    def test_sorting_invalid_field_fallback_to_id(self, db_session: Session, test_coach):
+    def test_sorting_invalid_field_fallback_to_id(
+        self, db_session: Session, test_coach
+    ):
         for i in range(3):
             create_athlete(
                 db_session,
@@ -307,7 +341,9 @@ class TestAthletesPaginationSorting:
                 coach_id=test_coach.id,
             )
 
-        athletes, _ = get_athletes(db_session, coach_id=test_coach.id, sort_by="invalid_field")
+        athletes, _ = get_athletes(
+            db_session, coach_id=test_coach.id, sort_by="invalid_field"
+        )
 
         ids = [a.id for a in athletes]
         assert ids == sorted(ids)
@@ -367,7 +403,9 @@ class TestUpdateAthlete:
 
     def test_update_nonexistent_athlete(self, db_session: Session):
         update_data = AthleteUpdate(name="Новое имя")
-        result = update_athlete(db_session, athlete_id=99999, athlete_update=update_data)
+        result = update_athlete(
+            db_session, athlete_id=99999, athlete_update=update_data
+        )
 
         assert result is None
 
@@ -375,7 +413,11 @@ class TestUpdateAthlete:
         athlete = create_athlete(
             db_session,
             AthleteCreate(
-                name="Тест", sport_type=SportType.RUNNING, age=25, phone=make_phone(502), progress=0
+                name="Тест",
+                sport_type=SportType.RUNNING,
+                age=25,
+                phone=make_phone(502),
+                progress=0,
             ),
             coach_id=test_coach.id,
         )
@@ -413,7 +455,9 @@ class TestUpdateAthleteStatus:
         assert athlete.status == AthleteStatus.INJURED
 
     def test_update_status_nonexistent(self, db_session: Session):
-        result = update_athlete_status(db_session, athlete_id=99999, status=AthleteStatus.INJURED)
+        result = update_athlete_status(
+            db_session, athlete_id=99999, status=AthleteStatus.INJURED
+        )
         assert result is None
 
 

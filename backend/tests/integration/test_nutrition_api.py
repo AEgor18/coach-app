@@ -15,7 +15,9 @@ class TestNutritionEndpoints:
         assert response.status_code == status.HTTP_200_OK
         assert isinstance(response.json(), list)
 
-    def test_create_nutrition_plan_success(self, authorized_client, db_session, test_coach):
+    def test_create_nutrition_plan_success(
+        self, authorized_client, db_session, test_coach
+    ):
         athlete = create_athlete(
             db_session,
             AthleteCreate(
@@ -68,14 +70,20 @@ class TestNutritionEndpoints:
         response = authorized_client.get("/api/nutrition/plans/99999")
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_update_nutrition_plan_success(self, authorized_client, db_session, test_coach):
+    def test_update_nutrition_plan_success(
+        self, authorized_client, db_session, test_coach
+    ):
         from crud.nutrition import create_nutrition_plan
         from schemas.nutrition import NutritionPlanCreate
 
         athlete = create_athlete(
             db_session,
             AthleteCreate(
-                name="Тест", sport_type=SportType.YOGA, age=20, phone="+79990008002", progress=0
+                name="Тест",
+                sport_type=SportType.YOGA,
+                age=20,
+                phone="+79990008002",
+                progress=0,
             ),
             coach_id=test_coach.id,
         )
@@ -98,20 +106,27 @@ class TestNutritionEndpoints:
         )
 
         response = authorized_client.put(
-            f"/api/nutrition/plans/{plan.id}", json={"title": "Обновлённый", "calories": 2200}
+            f"/api/nutrition/plans/{plan.id}",
+            json={"title": "Обновлённый", "calories": 2200},
         )
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["title"] == "Обновлённый"
         assert response.json()["calories"] == 2200
 
-    def test_update_nutrition_status_success(self, authorized_client, db_session, test_coach):
+    def test_update_nutrition_status_success(
+        self, authorized_client, db_session, test_coach
+    ):
         from crud.nutrition import create_nutrition_plan
         from schemas.nutrition import NutritionPlanCreate
 
         athlete = create_athlete(
             db_session,
             AthleteCreate(
-                name="Тест", sport_type=SportType.RUNNING, age=25, phone="+79990008003", progress=0
+                name="Тест",
+                sport_type=SportType.RUNNING,
+                age=25,
+                phone="+79990008003",
+                progress=0,
             ),
             coach_id=test_coach.id,
         )
@@ -139,7 +154,9 @@ class TestNutritionEndpoints:
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["status"] == "Завершен"
 
-    def test_delete_nutrition_plan_success(self, authorized_client, db_session, test_coach):
+    def test_delete_nutrition_plan_success(
+        self, authorized_client, db_session, test_coach
+    ):
         from crud.nutrition import create_nutrition_plan
         from schemas.nutrition import NutritionPlanCreate
 

@@ -4,7 +4,6 @@ from .athletes import (
     get_athlete,
     get_athletes,
     update_athlete,
-    update_athlete_status,
 )
 from .nutrition import (
     create_nutrition_plan,
@@ -31,10 +30,10 @@ from .trainings import (
     create_training_plan,
     delete_training_plan,
     get_training_plan,
-    get_training_plans,
     update_training_plan,
     update_training_status,
 )
+
 
 __all__ = [
     "get_athletes",

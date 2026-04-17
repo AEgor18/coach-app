@@ -59,12 +59,15 @@ class TestProfileEndpoints:
         assert response.json()["full_name"] == "Обновлённое ФИО"
 
     def test_refresh_token_invalid(self, client):
-        response = client.post("/api/profile/refresh", json={"refresh_token": "invalid_token"})
+        response = client.post(
+            "/api/profile/refresh", json={"refresh_token": "invalid_token"}
+        )
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_upload_avatar_wrong_type(self, authorized_client):
         response = authorized_client.post(
-            "/api/profile/avatar", files={"file": ("test.txt", b"fake data", "text/plain")}
+            "/api/profile/avatar",
+            files={"file": ("test.txt", b"fake data", "text/plain")},
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert "Only JPEG or PNG" in response.json()["detail"]
@@ -72,7 +75,8 @@ class TestProfileEndpoints:
     def test_upload_avatar_too_large(self, authorized_client):
         large_data = b"x" * (3 * 1024 * 1024)
         response = authorized_client.post(
-            "/api/profile/avatar", files={"file": ("large.jpg", large_data, "image/jpeg")}
+            "/api/profile/avatar",
+            files={"file": ("large.jpg", large_data, "image/jpeg")},
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert "File too large" in response.json()["detail"]
@@ -83,4 +87,7 @@ class TestProfileEndpoints:
 
         from models.profile import CoachProfile
 
-        assert db_session.query(CoachProfile).filter_by(email="test@coach.com").first() is None
+        assert (
+            db_session.query(CoachProfile).filter_by(email="test@coach.com").first()
+            is None
+        )

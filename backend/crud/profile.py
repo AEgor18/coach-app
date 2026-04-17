@@ -45,7 +45,9 @@ def create_coach_profile(db: Session, profile: CoachProfileCreate) -> CoachProfi
     return db_profile
 
 
-def authenticate_coach(db: Session, email: str, password: str) -> Optional[CoachProfile]:
+def authenticate_coach(
+    db: Session, email: str, password: str
+) -> Optional[CoachProfile]:
     coach = get_coach_by_email(db, email)
     if not coach:
         return None
@@ -57,7 +59,9 @@ def authenticate_coach(db: Session, email: str, password: str) -> Optional[Coach
     return coach
 
 
-def update_coach_profile(db: Session, profile_update: CoachProfileUpdate) -> Optional[CoachProfile]:
+def update_coach_profile(
+    db: Session, profile_update: CoachProfileUpdate
+) -> Optional[CoachProfile]:
     db_profile = db.query(CoachProfile).first()
     if not db_profile:
         return None

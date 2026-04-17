@@ -49,7 +49,9 @@ class TestNutritionCRUD:
         assert result.athletes[0].id == athlete.id
         assert result.coach_id == test_coach.id
 
-    def test_create_nutrition_plan_empty_athletes(self, db_session: Session, test_coach):
+    def test_create_nutrition_plan_empty_athletes(
+        self, db_session: Session, test_coach
+    ):
         plan_data = NutritionPlanCreate(
             title="Общий план",
             nutrition_type="поддержание",
@@ -72,7 +74,11 @@ class TestNutritionCRUD:
         athlete = create_athlete(
             db_session,
             AthleteCreate(
-                name="Тест", sport_type=SportType.YOGA, age=20, phone="+79990001002", progress=0
+                name="Тест",
+                sport_type=SportType.YOGA,
+                age=20,
+                phone="+79990001002",
+                progress=0,
             ),
             coach_id=test_coach.id,
         )
@@ -107,14 +113,22 @@ class TestNutritionCRUD:
         a1 = create_athlete(
             db_session,
             AthleteCreate(
-                name="A1", sport_type=SportType.RUNNING, age=20, phone="+79990001003", progress=0
+                name="A1",
+                sport_type=SportType.RUNNING,
+                age=20,
+                phone="+79990001003",
+                progress=0,
             ),
             coach_id=test_coach.id,
         )
         a2 = create_athlete(
             db_session,
             AthleteCreate(
-                name="A2", sport_type=SportType.YOGA, age=22, phone="+79990001004", progress=0
+                name="A2",
+                sport_type=SportType.YOGA,
+                age=22,
+                phone="+79990001004",
+                progress=0,
             ),
             coach_id=test_coach.id,
         )

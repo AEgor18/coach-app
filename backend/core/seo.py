@@ -5,6 +5,7 @@ from fastapi.responses import PlainTextResponse
 
 from core.config import settings
 
+
 seo_router = APIRouter(tags=["SEO"])
 
 PUBLIC_PAGES = [
@@ -76,4 +77,6 @@ async def get_json_ld():
         "description": "Управление тренировками и спортсменами для тренеров",
         "logo": f"{base_url}/logo.png",
     }
-    return Response(content=str(json_ld).replace("'", '"'), media_type="application/ld+json")
+    return Response(
+        content=str(json_ld).replace("'", '"'), media_type="application/ld+json"
+    )

@@ -32,6 +32,7 @@ from .trainings import (
     TrainingType,
 )
 
+
 __all__ = [
     "SportType",
     "AthleteStatus",

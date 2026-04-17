@@ -6,6 +6,7 @@ from sqlalchemy.orm import relationship
 
 from database import Base
 
+
 nutrition_athletes = Table(
     "nutrition_athletes",
     Base.metadata,

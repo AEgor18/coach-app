@@ -10,6 +10,7 @@ from database import Base, engine
 from middleware.auth import AuthMiddleware
 from routers import admin, athletes, nutrition, profile, reports, trainings, weather
 
+
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
@@ -65,13 +66,17 @@ if frontend_dist.exists():
 
         index_file = frontend_dist / "index.html"
         if index_file.exists():
-            return HTMLResponse(content=index_file.read_text(encoding="utf-8"), status_code=200)
+            return HTMLResponse(
+                content=index_file.read_text(encoding="utf-8"), status_code=200
+            )
 
         return HTMLResponse(content="<h1>404 - Page Not Found</h1>", status_code=404)
 
     app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="spa")
 else:
-    print(f"Warning: Frontend build not found at {frontend_dist}. SPA routing will not work.")
+    print(
+        f"Warning: Frontend build not found at {frontend_dist}. SPA routing will not work."
+    )
 
 
 @app.get("/api/info")

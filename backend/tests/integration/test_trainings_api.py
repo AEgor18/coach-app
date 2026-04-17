@@ -17,7 +17,9 @@ class TestTrainingsEndpoints:
         assert response.status_code == status.HTTP_200_OK
         assert isinstance(response.json(), list)
 
-    def test_create_training_plan_success(self, authorized_client, db_session, test_coach):
+    def test_create_training_plan_success(
+        self, authorized_client, db_session, test_coach
+    ):
         athlete = create_athlete(
             db_session,
             AthleteCreate(
@@ -61,14 +63,20 @@ class TestTrainingsEndpoints:
         response = authorized_client.get("/api/trainings/plans/99999")
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_update_training_plan_success(self, authorized_client, db_session, test_coach):
+    def test_update_training_plan_success(
+        self, authorized_client, db_session, test_coach
+    ):
         from crud.trainings import create_training_plan
         from schemas.trainings import TrainingPlanCreate
 
         athlete = create_athlete(
             db_session,
             AthleteCreate(
-                name="Тест", sport_type=SportType.YOGA, age=20, phone="+79990009002", progress=0
+                name="Тест",
+                sport_type=SportType.YOGA,
+                age=20,
+                phone="+79990009002",
+                progress=0,
             ),
             coach_id=test_coach.id,
         )
@@ -87,20 +95,27 @@ class TestTrainingsEndpoints:
         )
 
         response = authorized_client.put(
-            f"/api/trainings/plans/{plan.id}", json={"title": "Обновлённый", "duration": 60}
+            f"/api/trainings/plans/{plan.id}",
+            json={"title": "Обновлённый", "duration": 60},
         )
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["title"] == "Обновлённый"
         assert response.json()["duration"] == 60
 
-    def test_update_training_status_success(self, authorized_client, db_session, test_coach):
+    def test_update_training_status_success(
+        self, authorized_client, db_session, test_coach
+    ):
         from crud.trainings import create_training_plan
         from schemas.trainings import TrainingPlanCreate
 
         athlete = create_athlete(
             db_session,
             AthleteCreate(
-                name="Тест", sport_type=SportType.RUNNING, age=25, phone="+79990009003", progress=0
+                name="Тест",
+                sport_type=SportType.RUNNING,
+                age=25,
+                phone="+79990009003",
+                progress=0,
             ),
             coach_id=test_coach.id,
         )
@@ -124,7 +139,9 @@ class TestTrainingsEndpoints:
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["status"] == "Завершенная"
 
-    def test_delete_training_plan_success(self, authorized_client, db_session, test_coach):
+    def test_delete_training_plan_success(
+        self, authorized_client, db_session, test_coach
+    ):
         from crud.trainings import create_training_plan
         from schemas.trainings import TrainingPlanCreate
 

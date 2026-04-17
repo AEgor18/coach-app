@@ -6,6 +6,7 @@ from .reports import router as reports_router
 from .trainings import router as trainings_router
 from .weather import router as weather_router
 
+
 __all__ = [
     "athletes_router",
     "trainings_router",

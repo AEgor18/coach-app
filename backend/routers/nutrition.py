@@ -21,6 +21,7 @@ from schemas.nutrition import (
     NutritionPlanUpdate,
 )
 
+
 router = APIRouter(prefix="/api/nutrition", tags=["Nutrition"])
 
 
@@ -32,7 +33,9 @@ async def read_nutrition_plans(
     return plans
 
 
-@router.post("/plans", response_model=NutritionPlanResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/plans", response_model=NutritionPlanResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_new_nutrition_plan(
     plan: NutritionPlanCreate,
     db: Session = Depends(get_db),
