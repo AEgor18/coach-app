@@ -128,13 +128,32 @@ jobs:
               run: docker compose build
 
     deploy:
-        name: Auto Deploy
+        name: Auto Deploy (Lab) 🧪
         runs-on: ubuntu-latest
-        needs: docker-build
+        needs: [docker-build]
         if: github.ref == 'refs/heads/main'
 
         steps:
-            - name: Deploy placeholder
-              run: |
-                  echo "Production deploy step"
-                  echo "Replace with ssh/docker pull/docker compose up -d"
+            - name: Checkout repository
+                uses: actions/checkout@v4
+
+            - name: Create .env file from secrets
+                run: |
+                    echo -e "${{ secrets.MAIN_ENV }}" > .env
+                    echo "✅ .env created with $(wc -l < .env) variables"
+
+            - name: Build images
+                run: docker compose -f docker-compose.yml build
+
+            - name: Stop previous services
+                run: docker compose -f docker-compose.yml down --remove-orphans
+                continue-on-error: true
+
+            - name: Run services
+                run: docker compose -f docker-compose.yml up -d --remove-orphans
+
+            - name: Health check
+                run: |
+                    echo "Waiting 10 seconds for services to start..."
+                    sleep 10
+                    echo "Deploy finished!"
