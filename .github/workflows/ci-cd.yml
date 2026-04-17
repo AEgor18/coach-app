@@ -76,6 +76,12 @@ jobs:
                   poetry config virtualenvs.create false
                   poetry install --no-interaction --with dev --no-root
 
+            - name: Run Ruff linter ⚡
+              run: |
+                  cd backend
+                  poetry run ruff check .
+                  poetry run ruff format . --check
+
             - name: Run backend tests
               run: |
                   cd backend
