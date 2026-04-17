@@ -76,12 +76,7 @@ jobs:
                   poetry config virtualenvs.create false
                   poetry install --no-interaction --with dev --no-root
 
-            - name: Debug Ruff formatting
-              run: |
-                  cd backend
-                  poetry run ruff format crud/athletes.py --diff || true
-
-            - name: Run Ruff linter ⚡
+            - name: Run Ruff linter
               run: |
                   cd backend
                   poetry run ruff check .

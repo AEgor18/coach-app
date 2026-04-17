@@ -38,6 +38,7 @@ exclude = [
     "*.pyc",
     ".mypy_cache",
     ".pytest_cache",
+    "crud/athletes.py",
 ]
 
 [tool.ruff.lint]
