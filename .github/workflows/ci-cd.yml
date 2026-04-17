@@ -128,7 +128,7 @@ jobs:
               run: docker compose build
 
     deploy:
-        name: Auto Deploy (Lab) 🧪
+        name: Auto Deploy
         runs-on: ubuntu-latest
         needs: [docker-build]
         if: github.ref == 'refs/heads/main'
